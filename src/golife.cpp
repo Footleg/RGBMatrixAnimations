@@ -131,7 +131,7 @@ void GameOfLife::runCycle()
         if (iterations > 0)
             renderer.outputMessage(msg);
 
-        initialiseGrid(6);
+        initialiseGrid(renderer.random_uint(0,8));
         
     }
 
@@ -392,6 +392,30 @@ void GameOfLife::initialiseGrid(uint8_t patternIdx)
                 O,O,O,O,O,O,O,O,O,O,X,O,O,O,O,O,
                 O,O,O,O,O,O,O,O,O,X,O,O,O,O,O,O,
                 O,O,O,O,O,O,O,O,O,X,X,X,O,O,O,O };
+
+                for (int i=0; i < 256; i++) pattern[i] = patternAlt[i];
+            }
+            break;
+                
+            case 7:
+            {
+                bool patternAlt[] = {
+                O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,
+                O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,
+                O,O,O,O,O,X,X,X,O,O,O,O,O,O,O,O,
+                O,O,O,O,O,X,O,O,X,X,X,O,O,O,O,O,
+                O,O,O,O,O,X,X,X,O,O,X,O,O,O,O,O,
+                O,O,O,O,O,O,O,O,X,X,X,O,O,O,O,O,
+                O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,
+                O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,
+                O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,
+                O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,
+                O,O,O,O,O,X,X,X,O,O,O,O,O,O,O,O,
+                O,O,O,O,O,X,O,O,X,X,X,O,O,O,O,O,
+                O,O,O,O,O,X,X,X,O,O,X,O,O,O,O,O,
+                O,O,O,O,O,O,O,O,X,X,X,O,O,O,O,O,
+                O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,
+                O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,O };
 
                 for (int i=0; i < 256; i++) pattern[i] = patternAlt[i];
             }
