@@ -1,6 +1,6 @@
 # Example Programs for RGB LED Matrix devices
 This folder contains a set of example programs using the LED animaton classes with an RGB LED Matrix. A Makefile is provided to compile these for the RGB Matrix library by Henner Zeller to run on a Raspberry Pi. First check out the https://github.com/hzeller/rpi-rgb-led-matrix library onto a Raspberry Pi. This can be installed following the instructions for the Adafruit RGB Matrix HAT https://learn.adafruit.com/adafruit-rgb-matrix-plus-real-time-clock-hat-for-raspberry-pi/driving-matrices 
-Once you have the hzeller/rpi-rgb-led-matrix library deployed on your Raspberry Pi, build the rgbmatrix library and run the examples provided with that libray first. This done from a command prompt in the rpi-rgb-led-matrix folder, run the command: 
+Once you have the hzeller/rpi-rgb-led-matrix library deployed on your Raspberry Pi, build the rgbmatrix library and run the examples provided with that library first. This done from a command prompt in the rpi-rgb-led-matrix folder, run the command: 
 ```bash
 HARDWARE_DESC=adafruit-hat make
 ```
