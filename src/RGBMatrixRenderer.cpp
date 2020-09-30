@@ -28,7 +28,7 @@
 #include "RGBMatrixRenderer.h"
 
 // default constructor
-RGBMatrixRenderer::RGBMatrixRenderer(int width, int height, int maxBrightness)
+RGBMatrixRenderer::RGBMatrixRenderer(uint16_t width, uint16_t height, uint8_t maxBrightness)
     : gridWidth(width), gridHeight(height), maxBrightness(maxBrightness)
 {} //RGBMatrixRenderer
 
@@ -37,12 +37,12 @@ RGBMatrixRenderer::~RGBMatrixRenderer()
 {
 } //~RGBMatrixRenderer
 
-int RGBMatrixRenderer::getGridWidth()
+uint16_t RGBMatrixRenderer::getGridWidth()
 {
     return gridWidth;
 }
 
-int RGBMatrixRenderer::getGridHeight()
+uint16_t RGBMatrixRenderer::getGridHeight()
 {
     return gridHeight;
 }
@@ -58,11 +58,11 @@ void RGBMatrixRenderer::setRandomColour()
     r = random_uint(0,maxBrightness);
     g = random_uint(0,maxBrightness);
     b = random_uint(0,maxBrightness);
-    int minBrightness = maxBrightness * 3 / 4;
+    uint8_t minBrightness = maxBrightness * 3 / 4;
     
     //Prevent colours being too dim
     if (r<minBrightness && g<minBrightness && b<minBrightness) {
-        int c = random_uint(0,3);
+        uint8_t c = random_uint(0,3);
         switch (c) {
         case 0:
             r = 200;
@@ -85,9 +85,9 @@ void RGBMatrixRenderer::setRandomColour()
 }
 
 //Method to update a grid coordinate while keeping on the matrix, with optional wrapping
-int RGBMatrixRenderer::newPosition(int position, int increment, int dimension, bool wrap)
+uint16_t RGBMatrixRenderer::newPosition(uint16_t position, uint16_t increment, uint16_t dimension, bool wrap)
 {
-    int newPos = position + increment;
+    uint16_t newPos = position + increment;
 
     if (wrap) 
     {
@@ -107,12 +107,12 @@ int RGBMatrixRenderer::newPosition(int position, int increment, int dimension, b
     return newPos;
 }
 
-int RGBMatrixRenderer::newPositionX(int x, int increment, bool wrap)
+uint16_t RGBMatrixRenderer::newPositionX(uint16_t x, uint16_t increment, bool wrap)
 {
     return newPosition(x, increment, gridWidth, wrap);
 }
 
-int RGBMatrixRenderer::newPositionY(int y, int increment, bool wrap)
+uint16_t RGBMatrixRenderer::newPositionY(uint16_t y, uint16_t increment, bool wrap)
 {
     return newPosition(y, increment, gridHeight, wrap);
 }

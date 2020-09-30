@@ -33,7 +33,7 @@
 
 using namespace rgb_matrix;
 
-uint32_t prevTime  = 0;      // Used for frames-per-second throttle
+uint64_t prevTime  = 0;      // Used for frames-per-second throttle
 
 uint8_t backbuffer = 0;      // Index for double-buffered animation
 
@@ -55,8 +55,8 @@ uint64_t micros()
 // using the syntax *this
 class Animation : public ThreadedCanvasManipulator, public RGBMatrixRenderer {
     public:
-        Animation(Canvas *m, int width, int height, int delay_ms, int accel_, int shake, int numGrains)
-            : ThreadedCanvasManipulator(m), RGBMatrixRenderer{width,height}, delay_ms_(delay_ms), animation(*this,shake,numGrains), 
+        Animation(Canvas *m, uint16_t width, uint16_t height, int delay_ms, int accel_, int shake, int numGrains)
+            : ThreadedCanvasManipulator(m), RGBMatrixRenderer{width,height}, delay_ms_(delay_ms), animation(*this,shake), 
               ax(0), ay(0)
         {
             
@@ -81,11 +81,29 @@ class Animation : public ThreadedCanvasManipulator, public RGBMatrixRenderer {
             animation.setStaticPixel(16,11,0);
             animation.setStaticPixel(15,20,0);
             animation.setStaticPixel(16,20,0);
-
-            //Add grains
+/*
+            //Add grains in random positions
             for (int i=0; i<numGrains;i++) {
-                animation.addGrain(1 + rand()%215);
+                animation.addGrain(6); //(1 + rand()%215);
             }
+*/            
+
+            //Add grains in fixed positions
+            for (int y=24; y<32;y++) {
+                for (int x=24; x<32;x++) {
+                    animation.addGrain(x,y,6);
+                }
+                for (int x=16; x<24;x++) {
+                    animation.addGrain(x,y,50);
+                }
+                for (int x=8; x<16;x++) {
+                    animation.addGrain(x,y,150);
+                }
+                for (int x=0; x<8;x++) {
+                    animation.addGrain(x,y,200);
+                }
+            }
+
         }
         
         virtual ~Animation(){}
@@ -147,7 +165,7 @@ class Animation : public ThreadedCanvasManipulator, public RGBMatrixRenderer {
             }
         }
 
-        virtual void setPixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) 
+        virtual void setPixel(uint16_t x, uint16_t y, uint8_t r, uint8_t g, uint8_t b) 
         {
             canvas()->SetPixel(x, gridHeight - y - 1, r, g, b);
         }

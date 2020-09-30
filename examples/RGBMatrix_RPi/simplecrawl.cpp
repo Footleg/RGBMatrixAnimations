@@ -55,7 +55,7 @@ class Animation : public ThreadedCanvasManipulator, public RGBMatrixRenderer {
             }
         }
 
-        virtual void setPixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) 
+        virtual void setPixel(uint16_t x, uint16_t y, uint8_t r, uint8_t g, uint8_t b) 
         {
             canvas()->SetPixel(x, gridHeight - y - 1, r, g, b);
         }

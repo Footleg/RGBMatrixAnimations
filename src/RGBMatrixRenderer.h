@@ -39,32 +39,32 @@ class RGBMatrixRenderer
 {
     //variables
     public:
-        int r;
-        int g;
-        int b;
+        uint8_t r;
+        uint8_t g;
+        uint8_t b;
     protected:
-        int gridWidth;
-        int gridHeight;
+        uint16_t gridWidth;
+        uint16_t gridHeight;
     private:
-        int maxBrightness;
+        uint8_t maxBrightness;
         
     //functions
     public:
-        RGBMatrixRenderer(int, int, int=255);
+        RGBMatrixRenderer(uint16_t , uint16_t , uint8_t =255);
         virtual ~RGBMatrixRenderer();
-        int getGridWidth();
-        int getGridHeight();
+        uint16_t getGridWidth();
+        uint16_t getGridHeight();
         uint8_t getMaxBrightness();
-        virtual void setPixel(int, int, uint8_t, uint8_t, uint8_t) = 0;
+        virtual void setPixel(uint16_t, uint16_t, uint8_t, uint8_t, uint8_t) = 0;
         virtual void showPixels() = 0;
         virtual void msSleep(int) = 0;
         virtual void outputMessage(char[]) = 0;
         virtual uint16_t random_uint(uint16_t,uint16_t) = 0;
         void setRandomColour();
-        int newPositionX(int,int,bool=true);
-        int newPositionY(int,int,bool=true);
+        uint16_t newPositionX(uint16_t,uint16_t,bool=true);
+        uint16_t newPositionY(uint16_t,uint16_t,bool=true);
         uint8_t blendColour(uint8_t,uint8_t,uint8_t,uint8_t);
     protected:
     private:
-        int newPosition(int,int,int,bool);
+        uint16_t newPosition(uint16_t,uint16_t,uint16_t,bool);
 }; //RGBMatrixRenderer
