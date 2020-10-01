@@ -72,7 +72,7 @@ class Animation : public ThreadedCanvasManipulator, public RGBMatrixRenderer {
             usleep(delay_ms * 1000);
         }
 
-        virtual uint16_t random_uint(uint16_t a, uint16_t b) {
+        virtual int16_t random_int16(int16_t a, int16_t b) {
             return a + rand()%(b-a);
         }
 

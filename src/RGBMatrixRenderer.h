@@ -25,6 +25,8 @@
  * along with this software.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#pragma once
+
 #if defined(ARDUINO) && ARDUINO >= 100
 #include "Arduino.h"
 #elif defined(ARDUINO)
@@ -59,7 +61,7 @@ class RGBMatrixRenderer
         virtual void showPixels() = 0;
         virtual void msSleep(int) = 0;
         virtual void outputMessage(char[]) = 0;
-        virtual uint16_t random_uint(uint16_t,uint16_t) = 0;
+        virtual int16_t random_int16(int16_t a, int16_t b) = 0;
         void setRandomColour();
         uint16_t newPositionX(uint16_t,uint16_t,bool=true);
         uint16_t newPositionY(uint16_t,uint16_t,bool=true);

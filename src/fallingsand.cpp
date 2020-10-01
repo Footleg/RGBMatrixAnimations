@@ -110,8 +110,8 @@ void FallingSand::runCycle()
     int32_t v2; // Velocity squared
     float   v;  // Absolute velocity
     for(int16_t i=0; i<numGrains; i++) {
-        grains[i].vx += ax + renderer.random_uint(0,az2); // A little randomness makes
-        grains[i].vy += ay + renderer.random_uint(0,az2); // tall stacks topple better!
+        grains[i].vx += ax + renderer.random_int16(0,az2); // A little randomness makes
+        grains[i].vy += ay + renderer.random_int16(0,az2); // tall stacks topple better!
         // Terminal velocity (in any direction) is 256 units -- equal to
         // 1 pixel -- which keeps moving grains from passing through each other
         // and other such mayhem.  Though it takes some extra math, velocity is
@@ -265,8 +265,8 @@ void FallingSand::addGrain(uint8_t id)
     uint16_t x,y;
     uint16_t attempts = 0;
     do {
-        x = renderer.random_uint(0,renderer.getGridWidth() ); // Assign random position within
-        y = renderer.random_uint(0,renderer.getGridHeight() ); // the 'grain' coordinate space
+        x = renderer.random_int16(0,renderer.getGridWidth() ); // Assign random position within
+        y = renderer.random_int16(0,renderer.getGridHeight() ); // the 'grain' coordinate space
         attempts++;
         // Check if corresponding pixel position is already occupied...
 /*        char msg[50];
@@ -318,7 +318,7 @@ renderer.outputMessage(msg);
 */
 }
 
-uint16_t FallingSand::grainCount()
+uint16_t FallingSand::getGrainCount()
 {
     return numGrains;
 }
@@ -326,4 +326,10 @@ uint16_t FallingSand::grainCount()
 void FallingSand::setStaticPixel(uint16_t x, uint16_t y, uint8_t id)
 {
     img[y * renderer.getGridWidth() + x] = id; // Mark it
+}
+
+void FallingSand::clearGrains()
+{
+    //Simply set number of grains to zero
+    numGrains = 0;
 }

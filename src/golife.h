@@ -73,6 +73,7 @@ class GameOfLife
         GameOfLife(RGBMatrixRenderer&,uint8_t,int);
         ~GameOfLife();
         void runCycle();
+        bool getCellState(uint16_t,uint16_t);
     protected:
     private:
         void initialiseGrid(uint8_t);

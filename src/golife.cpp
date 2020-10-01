@@ -131,7 +131,7 @@ void GameOfLife::runCycle()
         if (iterations > 0)
             renderer.outputMessage(msg);
 
-        initialiseGrid(renderer.random_uint(0,8));
+        initialiseGrid(renderer.random_int16(0,8));
         
     }
 
@@ -231,7 +231,7 @@ void GameOfLife::initialiseGrid(uint8_t patternIdx)
         {
             for(int x = 0; x < renderer.getGridWidth(); ++x)
             {
-                uint8_t randNumber = renderer.random_uint(0,100);
+                uint8_t randNumber = renderer.random_int16(0,100);
                 if (randNumber < 15)
                 {
                     cells[x][y] = CELL_ALIVE;
@@ -642,4 +642,9 @@ void GameOfLife::fadeInChanges()
         renderer.showPixels();
         renderer.msSleep(fadeDelay);
     }
+}
+
+bool GameOfLife::getCellState(uint16_t x, uint16_t y)
+{
+    return ( (cells[x][y] & CELL_ALIVE) != 0 );
 }

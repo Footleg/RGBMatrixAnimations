@@ -55,14 +55,14 @@ uint8_t RGBMatrixRenderer::getMaxBrightness()
 void RGBMatrixRenderer::setRandomColour()
 {
     // Init colour randomly
-    r = random_uint(0,maxBrightness);
-    g = random_uint(0,maxBrightness);
-    b = random_uint(0,maxBrightness);
+    r = random_int16(0,maxBrightness);
+    g = random_int16(0,maxBrightness);
+    b = random_int16(0,maxBrightness);
     uint8_t minBrightness = maxBrightness * 3 / 4;
     
     //Prevent colours being too dim
     if (r<minBrightness && g<minBrightness && b<minBrightness) {
-        uint8_t c = random_uint(0,3);
+        uint8_t c = random_int16(0,3);
         switch (c) {
         case 0:
             r = 200;
@@ -87,7 +87,7 @@ void RGBMatrixRenderer::setRandomColour()
 //Method to update a grid coordinate while keeping on the matrix, with optional wrapping
 uint16_t RGBMatrixRenderer::newPosition(uint16_t position, uint16_t increment, uint16_t dimension, bool wrap)
 {
-    uint16_t newPos = position + increment;
+    int16_t newPos = position + increment;
 
     if (wrap) 
     {
