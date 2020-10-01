@@ -36,7 +36,15 @@ FallingSand::FallingSand(RGBMatrixRenderer &renderer_, int16_t shake_)
     // Allocate memory for pixels array
     img = new uint8_t[renderer.getGridWidth() * renderer.getGridHeight()];
 
-    // Allocate memory for grains array
+    // Allocate initial memory for grains array
+    uint16_t max = renderer.getGridWidth() * renderer.getGridHeight();
+    if (max < 100) {
+        maxGrains =  max;
+    }
+    else {
+        maxGrains = 100;
+    }
+    
     grains = new Grain[maxGrains];
 
     // The 'sand' grains exist in an integer coordinate space that's 256X
@@ -46,11 +54,8 @@ FallingSand::FallingSand(RGBMatrixRenderer &renderer_, int16_t shake_)
     maxY = renderer.getGridHeight() * 256 - 1; // Maximum Y coordinate in grain space
 
     velCap = 256;
-    grainsAdded = 0;
+    numGrains = 0;
     shake = shake_;
-
-    //Initial random colour
-    renderer.setRandomColour();
 
     //Clear img
     for (uint16_t i=0; i<renderer.getGridWidth() * renderer.getGridHeight(); i++) {
@@ -66,15 +71,12 @@ FallingSand::~FallingSand()
     delete [] grains;
 } //~FallingSand
 
-//Run Cycle is called once per frame of the animation
-void FallingSand::runCycle()
+//Update Display
+void FallingSand::updateDisplay()
 {
     // Update pixel data on display
     for(int y=0; y<renderer.getGridHeight(); y++) {
-//        char msg[255];
-//        std::string line = "";
         for(int x=0; x<renderer.getGridWidth(); x++) {
-//            line += std::to_string((img[y*renderer.getGridWidth() + x])) + ",";
             uint8_t colcode = img[y*renderer.getGridWidth() + x];
             if (colcode) {
                 /**/
@@ -83,19 +85,17 @@ void FallingSand::runCycle()
                 uint8_t r = (int(colcode/36)%6)*51;
 
                 renderer.setPixel(x,y,r,g,b);
-                
-                //renderer.setPixel(x,y,renderer.r,renderer.g,renderer.b);
-//                sprintf(msg,"Pixel at %d\n",int(y*renderer.getGridWidth() + x) );
-//                renderer.outputMessage(msg);
             }
             else {
                 renderer.setPixel(x,y,0,0,0);
             }
         }
-//        sprintf(msg,"%s\n", const_cast<char*>(line.c_str()) );
-//        renderer.outputMessage(msg);
     }
-    
+}
+
+//Run Cycle is called once per frame of the animation
+void FallingSand::runCycle()
+{
     // Read accelerometer...
     int16_t ax = -accelX,      // Transform accelerometer axes
             ay =  accelY,      // to grain coordinate space
@@ -109,7 +109,7 @@ void FallingSand::runCycle()
     // ...and apply 2D accel vector to grain velocities...
     int32_t v2; // Velocity squared
     float   v;  // Absolute velocity
-    for(int16_t i=0; i<grainsAdded; i++) {
+    for(int16_t i=0; i<numGrains; i++) {
         grains[i].vx += ax + renderer.random_uint(0,az2); // A little randomness makes
         grains[i].vy += ay + renderer.random_uint(0,az2); // tall stacks topple better!
         // Terminal velocity (in any direction) is 256 units -- equal to
@@ -145,7 +145,7 @@ if (i<0) {
     uint16_t        i, oldidx, newidx, delta;
     int16_t        newx, newy;
     
-    for(i=0; i<grainsAdded; i++) {
+    for(i=0; i<numGrains; i++) {
         newx = grains[i].x + (grains[i].vx/32); // New position in grain space
         newy = grains[i].y + (grains[i].vy/32);
         if(newx > maxX) {               // If grain would go out of bounds
@@ -234,6 +234,9 @@ if (i<0) {
 //sprintf(msg, "Chang %d: %d -> %d\n", i, oldidx, newidx );
 //renderer.outputMessage(msg);
     }
+
+    //Update LEDs
+    updateDisplay();
 }
 
 void FallingSand::setAcceleration(int16_t x, int16_t y)
@@ -242,8 +245,8 @@ void FallingSand::setAcceleration(int16_t x, int16_t y)
     accelY = y;
     
     //Limit maximum velocity based on strength of gravity
-    uint16_t maxVel = sqrt( (int32_t)x*x+(int32_t)y*y ) * 5;
-    const int16_t minVelCap = 256;
+    uint16_t maxVel = sqrt( (int32_t)x*x+(int32_t)y*y ) * 8;
+    const int16_t minVelCap = 64;
     if (maxVel > minVelCap)
         velCap = maxVel;
     else
@@ -256,39 +259,68 @@ void FallingSand::setAcceleration(int16_t x, int16_t y)
 
 void FallingSand::addGrain(uint8_t id)
 {
-    //Place grains into array.
+    //Place grain in random free position.
     //id indicates grain colour (currently based on 6 values each per r,g,b channel
     //so values from 1-215 represent colours)
-    uint16_t i = grainsAdded;
+    uint16_t x,y;
+    uint16_t attempts = 0;
     do {
-        grains[i].x = renderer.random_uint(0,renderer.getGridWidth()  * 256); // Assign random position within
-        grains[i].y = renderer.random_uint(0,renderer.getGridHeight() * 256); // the 'grain' coordinate space
+        x = renderer.random_uint(0,renderer.getGridWidth() ); // Assign random position within
+        y = renderer.random_uint(0,renderer.getGridHeight() ); // the 'grain' coordinate space
+        attempts++;
         // Check if corresponding pixel position is already occupied...
-    } while(img[(grains[i].y / 256) * renderer.getGridWidth() + (grains[i].x / 256)]); // Keep retrying until a clear spot is found
-    grainsAdded++;
-    grains[i].vx = grains[i].vy = 0; // Initial velocity is zero
-    img[(grains[i].y / 256) * renderer.getGridWidth() + (grains[i].x / 256)] = id; // Mark it
-
-char msg[100];
-sprintf(msg, "Grains placed %d,%d colour:%d\n", int(grains[i].x), int(grains[i].y), int(img[(grains[i].y / 256) * renderer.getGridWidth() + (grains[i].x / 256)]) );
-renderer.outputMessage(msg);
+/*        char msg[50];
+        sprintf(msg, "Random place attempt %d\n", attempts);
+        renderer.outputMessage(msg);*/
+    } while ( (img[y * renderer.getGridWidth() + x]) && (attempts < 2001) ); // Keep retrying until a clear spot is found
+    
+    //Add grain if free position was found
+    if ( (img[y * renderer.getGridWidth() + x]) == false ) {
+        addGrain(x,y,id);
+    }
+    else {
+        char msg[50];
+        sprintf(msg, "Failed to find free position for new grain.\n");
+        renderer.outputMessage(msg);
+    }
 
 }
 
 void FallingSand::addGrain(uint16_t x, uint16_t y, uint8_t id)
 {
     //Place grain into array at specified position.
-    uint16_t i = grainsAdded;
+    uint16_t i = numGrains;
+
+    //Check for grains array overflow
+    if (i == maxGrains) {
+        //Expand grains array
+        Grain* newArr = new Grain[maxGrains + 20];
+        for (uint16_t i = 0; i < maxGrains; i++) {
+            newArr[i] = grains[i];
+        }
+        delete[] grains;
+        grains = newArr;
+        maxGrains += 20;
+        char msg[50];
+        sprintf(msg, "Grain store expanded to size %d\n", maxGrains);
+        renderer.outputMessage(msg);
+    }
+
     grains[i].x = (x * 256)+128; // Assign position in centre of
     grains[i].y = (y * 256)+128; // the 'grain' coordinate space
-    grainsAdded++;
+    numGrains++;
     grains[i].vx = grains[i].vy = 0; // Initial velocity is zero
     img[(grains[i].y / 256) * renderer.getGridWidth() + (grains[i].x / 256)] = id; // Mark it
-
+/*
 char msg[100];
-sprintf(msg, "Grains placed %d,%d colour:%d; Total:%d\n", int(grains[i].x), int(grains[i].y), int(img[(grains[i].y / 256) * renderer.getGridWidth() + (grains[i].x / 256)]), grainsAdded );
+sprintf(msg, "Grains placed %d,%d colour:%d; Total:%d\n", int(grains[i].x), int(grains[i].y), int(img[(grains[i].y / 256) * renderer.getGridWidth() + (grains[i].x / 256)]), numGrains );
 renderer.outputMessage(msg);
+*/
+}
 
+uint16_t FallingSand::grainCount()
+{
+    return numGrains;
 }
 
 void FallingSand::setStaticPixel(uint16_t x, uint16_t y, uint8_t id)

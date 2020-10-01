@@ -61,49 +61,40 @@ class Animation : public ThreadedCanvasManipulator, public RGBMatrixRenderer {
         {
             
             accel = accel_;
-            counter=1000;
-            angle=-1;
+            counter = 0;
+            angle = 0;
             cycles = 100000;
 
             //Create some static pixels
-
-
             int id = 180;
-            for (int x=0; x<10;x++) {
-                animation.setStaticPixel(x+11,11,id);
-                animation.setStaticPixel(x+11,20,id);
+            int wd = 6;
+            for (int y=10; y<22;y++) {
+                for (int x=8; x<8+wd+1;x++) {
+                    animation.setStaticPixel(x,y,id);
+                    animation.setStaticPixel(31-x,y,id);
+                }
+                if (y%2) wd--;
             }
-            for (int y=0; y<10;y++) {
-                animation.setStaticPixel(11,y+11,id);
-                animation.setStaticPixel(20,y+11,id);
-            }
-            animation.setStaticPixel(15,11,0);
-            animation.setStaticPixel(16,11,0);
-            animation.setStaticPixel(15,20,0);
-            animation.setStaticPixel(16,20,0);
-/*
-            //Add grains in random positions
-            for (int i=0; i<numGrains;i++) {
-                animation.addGrain(6); //(1 + rand()%215);
-            }
-*/            
 
             //Add grains in fixed positions
-            for (int y=24; y<32;y++) {
-                for (int x=24; x<32;x++) {
-                    animation.addGrain(x,y,6);
+            for (int y=0; y<8;y++) {
+                for (int x=18; x<26;x++) {
+                    animation.addGrain(x,y,60);
                 }
-                for (int x=16; x<24;x++) {
-                    animation.addGrain(x,y,50);
-                }
-                for (int x=8; x<16;x++) {
-                    animation.addGrain(x,y,150);
-                }
-                for (int x=0; x<8;x++) {
-                    animation.addGrain(x,y,200);
+                for (int x=6; x<14;x++) {
+                    animation.addGrain(x,y,40);
                 }
             }
 
+            //Add grains in random positions
+            int randGrains = numGrains - animation.grainCount();
+            for (int i=0; i<randGrains; i++) {
+                animation.addGrain(1 + rand()%215);
+            }
+
+            //Show LEDs and pause before starting animation
+            animation.updateDisplay();
+            msSleep(1000);
         }
         
         virtual ~Animation(){}
@@ -112,39 +103,39 @@ class Animation : public ThreadedCanvasManipulator, public RGBMatrixRenderer {
             uint8_t MAX_FPS=1000/delay_ms_;    // Maximum redraw rate, frames/second
 
             while (running() && !interrupt_received) {
-                //Update acceleration every 1000 cycles
+                //Update acceleration every few cycles
                 counter++;
                 if (counter > cycles) {
                     counter = 0;
                     angle++;
-                    fprintf(stderr,"Angle %d, Accel: %d,%d\n", angle, ax, ay );
                     switch(angle) {
                         case 0:
-                            ax = accel;
-                            ay = 0;
+                            ax = -accel;
+                            ay = accel;
                             break;
                         case 1:
                             ax = 0;
                             ay = -accel;
                             break;
                         case 2:
-                            ax = -accel;
+                            ax = 0;
                             ay = 0;
                             break;
                         case 3:
+                            ax = -accel;
+                            ay = 0;
+                            break;
+                        case 4:
                             ax = 0;
                             ay = accel;
                             break;
-                        case 4:
-                            ax = accel;
-                            ay = -accel;
-                            break;
                         case 5:
-                            ax = -accel;
-                            ay = accel;
+                            ax = accel;
+                            ay = 0;
                             angle = -1;
                             break;
                     }
+                    fprintf(stderr,"Angle %d, Accel: %d,%d\n", angle, ax, ay );
                     animation.setAcceleration(ax,ay);
                 }
 
@@ -159,9 +150,12 @@ class Animation : public ThreadedCanvasManipulator, public RGBMatrixRenderer {
                 
 
                 while((t = micros() - prevTime) < (100000L / MAX_FPS));
-//                fprintf(stderr,"Cycle time: %d\n", t );
+                //fprintf(stderr,"Cycle time: %d\n", t );
                 prevTime = micros();
-                cycles = 2500000 / t;
+
+                //Reset cycles before acceleration is changed based on speed of update
+                cycles = 4000000 / t;
+                if (accel < 5) cycles = 2*cycles;
             }
         }
 

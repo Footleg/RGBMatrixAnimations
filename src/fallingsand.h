@@ -51,8 +51,8 @@ class FallingSand
             int16_t vx, vy; // Velocity
         };
         Grain* grains;
-        uint16_t maxGrains=512;
-        uint16_t grainsAdded;
+        uint16_t maxGrains;
+        uint16_t numGrains;
         uint16_t maxX;
         uint16_t maxY;
         uint8_t* img; // Internal 'map' of pixels
@@ -65,10 +65,12 @@ class FallingSand
     public:
         FallingSand(RGBMatrixRenderer&,int16_t);
         ~FallingSand();
+        void updateDisplay();
         void runCycle();
         void setAcceleration(int16_t,int16_t);
         void addGrain(uint8_t);
         void addGrain(uint16_t,uint16_t,uint8_t);
+        uint16_t grainCount();
         void setStaticPixel(uint16_t,uint16_t,uint8_t);
     protected:
     private:
