@@ -36,6 +36,7 @@ class Crawler
         int direction;
         int colChg = 0;
         int dirChg = 0;
+        RGB_colour colour;
     //functions
     public:
         Crawler(RGBMatrixRenderer&);

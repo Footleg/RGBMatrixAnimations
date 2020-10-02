@@ -38,7 +38,7 @@ Crawler::Crawler(RGBMatrixRenderer &renderer_)
     direction = rand()%4;
 
     //Initial random colour
-    renderer.setRandomColour();
+    colour = renderer.getRandomColour();
 } //Crawler
 
 // default destructor
@@ -50,37 +50,37 @@ Crawler::~Crawler()
 void Crawler::runCycle()
 {
     //Set current position pixel
-    renderer.setPixel(x, y, renderer.r, renderer.g, renderer.b);
+    renderer.setPixel(x, y, colour);
 
     //Clear pixels around direction of travel
     switch(direction) {
         case 0: //Up
-            renderer.setPixel(renderer.newPositionX(x,-1,false), y, 0, 0, 0);
-            renderer.setPixel(renderer.newPositionX(x,1,false), y, 0, 0, 0);
-            renderer.setPixel(renderer.newPositionX(x,-1), renderer.newPositionY(y,1), 0, 0, 0);
-            renderer.setPixel(renderer.newPositionX(x,1), renderer.newPositionY(y,1), 0, 0, 0);
-            renderer.setPixel(x, renderer.newPositionY(y,1), 0, 0, 0);
+            renderer.setPixel(renderer.newPositionX(x,-1,false), y, RGB_colour{0, 0, 0} );
+            renderer.setPixel(renderer.newPositionX(x,1,false), y, RGB_colour{0, 0, 0} );
+            renderer.setPixel(renderer.newPositionX(x,-1), renderer.newPositionY(y,1), RGB_colour{0, 0, 0} );
+            renderer.setPixel(renderer.newPositionX(x,1), renderer.newPositionY(y,1), RGB_colour{0, 0, 0} );
+            renderer.setPixel(x, renderer.newPositionY(y,1), RGB_colour{0, 0, 0} );
             break;
         case 1: //Right
-            renderer.setPixel(x, renderer.newPositionY(y,-1), 0, 0, 0);
-            renderer.setPixel(x, renderer.newPositionY(y,1), 0, 0, 0);
-            renderer.setPixel(renderer.newPositionX(x,1), renderer.newPositionY(y,-1), 0, 0, 0);
-            renderer.setPixel(renderer.newPositionX(x,1), renderer.newPositionY(y,1), 0, 0, 0);
-            renderer.setPixel(renderer.newPositionX(x,1), y, 0, 0, 0);
+            renderer.setPixel(x, renderer.newPositionY(y,-1), RGB_colour{0, 0, 0} );
+            renderer.setPixel(x, renderer.newPositionY(y,1), RGB_colour{0, 0, 0} );
+            renderer.setPixel(renderer.newPositionX(x,1), renderer.newPositionY(y,-1), RGB_colour{0, 0, 0} );
+            renderer.setPixel(renderer.newPositionX(x,1), renderer.newPositionY(y,1), RGB_colour{0, 0, 0} );
+            renderer.setPixel(renderer.newPositionX(x,1), y, RGB_colour{0, 0, 0} );
             break;
         case 2: //Down
-            renderer.setPixel(renderer.newPositionX(x,-1,false), y, 0, 0, 0);
-            renderer.setPixel(renderer.newPositionX(x,1,false), y, 0, 0, 0);
-            renderer.setPixel(renderer.newPositionX(x,-1), renderer.newPositionY(y,-1), 0, 0, 0);
-            renderer.setPixel(renderer.newPositionX(x,1), renderer.newPositionY(y,-1), 0, 0, 0);
-            renderer.setPixel(x, renderer.newPositionY(y,-1), 0, 0, 0);
+            renderer.setPixel(renderer.newPositionX(x,-1,false), y, RGB_colour{0, 0, 0} );
+            renderer.setPixel(renderer.newPositionX(x,1,false), y, RGB_colour{0, 0, 0} );
+            renderer.setPixel(renderer.newPositionX(x,-1), renderer.newPositionY(y,-1), RGB_colour{0, 0, 0} );
+            renderer.setPixel(renderer.newPositionX(x,1), renderer.newPositionY(y,-1), RGB_colour{0, 0, 0} );
+            renderer.setPixel(x, renderer.newPositionY(y,-1), RGB_colour{0, 0, 0} );
             break;
         case 3: //Left
-            renderer.setPixel(x, renderer.newPositionY(y,-1), 0, 0, 0);
-            renderer.setPixel(x, renderer.newPositionY(y,1), 0, 0, 0);
-            renderer.setPixel(renderer.newPositionX(x,-1), renderer.newPositionY(y,-1), 0, 0, 0);
-            renderer.setPixel(renderer.newPositionX(x,-1), renderer.newPositionY(y,1), 0, 0, 0);
-            renderer.setPixel(renderer.newPositionX(x,-1), y, 0, 0, 0);
+            renderer.setPixel(x, renderer.newPositionY(y,-1), RGB_colour{0, 0, 0} );
+            renderer.setPixel(x, renderer.newPositionY(y,1), RGB_colour{0, 0, 0} );
+            renderer.setPixel(renderer.newPositionX(x,-1), renderer.newPositionY(y,-1), RGB_colour{0, 0, 0} );
+            renderer.setPixel(renderer.newPositionX(x,-1), renderer.newPositionY(y,1), RGB_colour{0, 0, 0} );
+            renderer.setPixel(renderer.newPositionX(x,-1), y, RGB_colour{0, 0, 0} );
             break;
     }
     
@@ -126,7 +126,7 @@ void Crawler::runCycle()
     colChg++;
     if (colChg >= 50) {
         colChg = 0;
-        renderer.setRandomColour();
+        colour = renderer.getRandomColour();
     }
 
 }

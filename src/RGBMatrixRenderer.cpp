@@ -52,26 +52,27 @@ uint8_t RGBMatrixRenderer::getMaxBrightness()
     return maxBrightness;
 }
 
-void RGBMatrixRenderer::setRandomColour()
+RGB_colour RGBMatrixRenderer::getRandomColour()
 {
     // Init colour randomly
-    r = random_int16(0,maxBrightness);
-    g = random_int16(0,maxBrightness);
-    b = random_int16(0,maxBrightness);
+    RGB_colour colour;
+    colour.r = random_int16(0,maxBrightness);
+    colour.g = random_int16(0,maxBrightness);
+    colour.b = random_int16(0,maxBrightness);
     uint8_t minBrightness = maxBrightness * 3 / 4;
     
     //Prevent colours being too dim
-    if (r<minBrightness && g<minBrightness && b<minBrightness) {
+    if (colour.r<minBrightness && colour.g<minBrightness && colour.b<minBrightness) {
         uint8_t c = random_int16(0,3);
         switch (c) {
         case 0:
-            r = 200;
+            colour.r = 200;
             break;
         case 1:
-            g = 200;
+            colour.g = 200;
             break;
         case 2:
-            b = 200;
+            colour.b = 200;
             break;
         }
     }
@@ -79,9 +80,10 @@ void RGBMatrixRenderer::setRandomColour()
     //This method for string concatenation was used as it compiles on both g++ on Linux
     //and arduino platforms
     char msg[32];
-    sprintf(msg, "New RGB colour  %d, %d, %d\n", r,  g, b);
+    sprintf(msg, "New RGB colour  %d, %d, %d\n", colour.r,  colour.g, colour.b);
     outputMessage(msg);
 
+    return colour;
 }
 
 //Method to update a grid coordinate while keeping on the matrix, with optional wrapping
@@ -117,11 +119,13 @@ uint16_t RGBMatrixRenderer::newPositionY(uint16_t y, uint16_t increment, bool wr
     return newPosition(y, increment, gridHeight, wrap);
 }
 
-uint8_t RGBMatrixRenderer::blendColour(uint8_t start, uint8_t end, uint8_t step, uint8_t steps)
+RGB_colour RGBMatrixRenderer::blendColour(RGB_colour start, RGB_colour end, uint8_t step, uint8_t steps)
 {
   
-  uint8_t blend = start + (end - start) * step / steps;
+  uint8_t r = start.r + (end.r - start.r) * step / steps;
+  uint8_t g = start.g + (end.g - start.g) * step / steps;
+  uint8_t b = start.b + (end.b - start.b) * step / steps;
 
-  return blend;
+  return RGB_colour{r,g,b};
 
 }

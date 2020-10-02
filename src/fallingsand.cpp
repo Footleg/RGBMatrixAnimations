@@ -33,6 +33,10 @@
 FallingSand::FallingSand(RGBMatrixRenderer &renderer_, int16_t shake_)
     : renderer(renderer_)
 {
+    // Allocate memory for colour palette array
+    palette = new RGB_colour[255];
+    coloursDefined = 0;
+    
     // Allocate memory for pixels array
     img = new uint8_t[renderer.getGridWidth() * renderer.getGridHeight()];
 
@@ -67,6 +71,7 @@ FallingSand::FallingSand(RGBMatrixRenderer &renderer_, int16_t shake_)
 // default destructor
 FallingSand::~FallingSand()
 {
+    delete [] palette;
     delete [] img;
     delete [] grains;
 } //~FallingSand
@@ -79,15 +84,10 @@ void FallingSand::updateDisplay()
         for(int x=0; x<renderer.getGridWidth(); x++) {
             uint8_t colcode = img[y*renderer.getGridWidth() + x];
             if (colcode) {
-                /**/
-                uint8_t b = (colcode%6)*51;
-                uint8_t g = (int(colcode/6)%6)*51;
-                uint8_t r = (int(colcode/36)%6)*51;
-
-                renderer.setPixel(x,y,r,g,b);
+                renderer.setPixel(x,y,getColour(colcode));
             }
             else {
-                renderer.setPixel(x,y,0,0,0);
+                renderer.setPixel(x,y,RGB_colour{0,0,0});
             }
         }
     }
@@ -257,7 +257,7 @@ void FallingSand::setAcceleration(int16_t x, int16_t y)
     renderer.outputMessage(msg);
 }
 
-void FallingSand::addGrain(uint8_t id)
+void FallingSand::addGrain(RGB_colour colour)
 {
     //Place grain in random free position.
     //id indicates grain colour (currently based on 6 values each per r,g,b channel
@@ -276,7 +276,7 @@ void FallingSand::addGrain(uint8_t id)
     
     //Add grain if free position was found
     if ( (img[y * renderer.getGridWidth() + x]) == false ) {
-        addGrain(x,y,id);
+        addGrain(x,y,colour);
     }
     else {
         char msg[50];
@@ -286,7 +286,7 @@ void FallingSand::addGrain(uint8_t id)
 
 }
 
-void FallingSand::addGrain(uint16_t x, uint16_t y, uint8_t id)
+void FallingSand::addGrain(uint16_t x, uint16_t y, RGB_colour colour)
 {
     //Place grain into array at specified position.
     uint16_t i = numGrains;
@@ -306,11 +306,11 @@ void FallingSand::addGrain(uint16_t x, uint16_t y, uint8_t id)
         renderer.outputMessage(msg);
     }
 
-    grains[i].x = (x * 256)+128; // Assign position in centre of
-    grains[i].y = (y * 256)+128; // the 'grain' coordinate space
+    grains[i].x = (x * 256)+renderer.random_int16(0,255); // Assign position in centre of
+    grains[i].y = (y * 256)+renderer.random_int16(0,255); // the 'grain' coordinate space
     numGrains++;
     grains[i].vx = grains[i].vy = 0; // Initial velocity is zero
-    img[(grains[i].y / 256) * renderer.getGridWidth() + (grains[i].x / 256)] = id; // Mark it
+    img[(grains[i].y / 256) * renderer.getGridWidth() + (grains[i].x / 256)] = getColourId(colour); // Mark it
 /*
 char msg[100];
 sprintf(msg, "Grains placed %d,%d colour:%d; Total:%d\n", int(grains[i].x), int(grains[i].y), int(img[(grains[i].y / 256) * renderer.getGridWidth() + (grains[i].x / 256)]), numGrains );
@@ -323,13 +323,49 @@ uint16_t FallingSand::getGrainCount()
     return numGrains;
 }
 
-void FallingSand::setStaticPixel(uint16_t x, uint16_t y, uint8_t id)
+void FallingSand::setStaticPixel(uint16_t x, uint16_t y, RGB_colour colour)
 {
-    img[y * renderer.getGridWidth() + x] = id; // Mark it
+    img[y * renderer.getGridWidth() + x] = getColourId(colour); // Mark it
 }
 
 void FallingSand::clearGrains()
 {
     //Simply set number of grains to zero
     numGrains = 0;
+}
+
+uint8_t FallingSand::getColourId(RGB_colour colour)
+{
+    //Search palette for matching colour
+    uint8_t id = 0;
+    for (uint8_t i=1; i<coloursDefined+1; i++) {
+        if ( (palette[i].r == colour.r)
+          && (palette[i].g == colour.g) 
+          && (palette[i].b == colour.b) ) {
+            id = i;
+            break;
+        }
+    }
+
+    //If match not found, add to palette if room
+    if (id == 0) {
+        if (coloursDefined < 255) {
+            coloursDefined++;
+            palette[coloursDefined] = colour;
+        }
+        id = coloursDefined; //For now set to last colour even if we couldn't add another one
+    }
+
+    return id;
+}
+
+RGB_colour FallingSand::getColour(uint8_t id)
+{
+    RGB_colour colour = {0,0,0};
+
+    if (id <= coloursDefined) {
+        colour = palette[id];
+    }
+
+    return colour;
 }

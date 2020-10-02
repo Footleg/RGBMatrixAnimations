@@ -51,6 +51,8 @@ class FallingSand
             int16_t vx, vy; // Velocity
         };
         Grain* grains;
+        RGB_colour* palette;
+        uint8_t coloursDefined;
         uint16_t maxGrains;
         uint16_t numGrains;
         uint16_t maxX;
@@ -68,11 +70,13 @@ class FallingSand
         void updateDisplay();
         void runCycle();
         void setAcceleration(int16_t,int16_t);
-        void addGrain(uint8_t);
-        void addGrain(uint16_t,uint16_t,uint8_t);
+        void addGrain(RGB_colour);
+        void addGrain(uint16_t,uint16_t,RGB_colour);
         void clearGrains();
         uint16_t getGrainCount();
-        void setStaticPixel(uint16_t,uint16_t,uint8_t);
+        void setStaticPixel(uint16_t,uint16_t,RGB_colour);
     protected:
     private:
+        uint8_t getColourId(RGB_colour);
+        RGB_colour getColour(uint8_t);
 }; //FallingSand

@@ -66,12 +66,12 @@ class Animation : public ThreadedCanvasManipulator, public RGBMatrixRenderer {
             cycles = 100000;
 
             //Create some static pixels
-            int id = 180;
+            RGB_colour red = {255,0,0};
             int wd = 6;
             for (int y=10; y<22;y++) {
                 for (int x=8; x<8+wd+1;x++) {
-                    animation.setStaticPixel(x,y,id);
-                    animation.setStaticPixel(31-x,y,id);
+                    animation.setStaticPixel(x,y,red);
+                    animation.setStaticPixel(31-x,y,red);
                 }
                 if (y%2) wd--;
             }
@@ -79,17 +79,17 @@ class Animation : public ThreadedCanvasManipulator, public RGBMatrixRenderer {
             //Add grains in fixed positions
             for (int y=0; y<8;y++) {
                 for (int x=18; x<26;x++) {
-                    animation.addGrain(x,y,60);
+                    animation.addGrain(x,y,RGB_colour{0,255,0} );
                 }
                 for (int x=6; x<14;x++) {
-                    animation.addGrain(x,y,40);
+                    animation.addGrain(x,y,RGB_colour{0,0,255} );
                 }
             }
 
             //Add grains in random positions
             int randGrains = numGrains - animation.getGrainCount();
             for (int i=0; i<randGrains; i++) {
-                animation.addGrain(1 + rand()%215);
+                animation.addGrain( getRandomColour() );
             }
 
             //Show LEDs and pause before starting animation
@@ -159,9 +159,9 @@ class Animation : public ThreadedCanvasManipulator, public RGBMatrixRenderer {
             }
         }
 
-        virtual void setPixel(uint16_t x, uint16_t y, uint8_t r, uint8_t g, uint8_t b) 
+        virtual void setPixel(uint16_t x, uint16_t y, RGB_colour colour) 
         {
-            canvas()->SetPixel(x, gridHeight - y - 1, r, g, b);
+            canvas()->SetPixel(x, gridHeight - y - 1, colour.r, colour.g, colour.b);
         }
 
         virtual void showPixels() {

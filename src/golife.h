@@ -53,7 +53,8 @@ class GameOfLife
         static uint8_t const CELL_PREV3 = 0x08;
         static uint8_t const CELL_BIRTH = 0x10;
         static uint8_t const CELL_DEATH = 0x20;
-        int delayms;
+        uint16_t delayms;
+        RGB_colour cellColour;
         uint8_t fadeSteps;
         RGBMatrixRenderer &renderer;
         uint8_t** cells; //8bits representing [null,null,deaths,births,prev3,prev2,prev1,alive]
@@ -67,10 +68,10 @@ class GameOfLife
         uint32_t iterations = 0;
         uint32_t iterationsMin = 4294967295;
         uint32_t iterationsMax = 0;
-        int panelSize;
+        uint16_t panelSize;
     //functions
     public:
-        GameOfLife(RGBMatrixRenderer&,uint8_t,int);
+        GameOfLife(RGBMatrixRenderer&,uint8_t,uint16_t);
         ~GameOfLife();
         void runCycle();
         bool getCellState(uint16_t,uint16_t);

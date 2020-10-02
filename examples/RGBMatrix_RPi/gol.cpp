@@ -43,7 +43,7 @@ static void InterruptHandler(int signo) {
 class Animation : public ThreadedCanvasManipulator, public RGBMatrixRenderer {
     public:
         Animation(Canvas *m, int width, int height, int delay_ms, uint8_t fade_steps)
-            : ThreadedCanvasManipulator(m), RGBMatrixRenderer{width,height}, delay_ms_(delay_ms), animation(*this,fade_steps,delay_ms_)
+            : ThreadedCanvasManipulator(m), RGBMatrixRenderer{width,height}, delay_ms_(delay_ms), animation(*this,fade_steps,delay_ms)
         {}
 
         virtual ~Animation(){}
@@ -55,9 +55,9 @@ class Animation : public ThreadedCanvasManipulator, public RGBMatrixRenderer {
             }
         }
 
-        virtual void setPixel(uint16_t x, uint16_t y, uint8_t r, uint8_t g, uint8_t b) 
+        virtual void setPixel(uint16_t x, uint16_t y, RGB_colour colour) 
         {
-            canvas()->SetPixel(x, gridHeight - y - 1, r, g, b);
+            canvas()->SetPixel(x, gridHeight - y - 1, colour.r, colour.g, colour.b);
         }
 
         virtual void showPixels() {

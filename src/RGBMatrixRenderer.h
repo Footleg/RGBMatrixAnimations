@@ -36,14 +36,16 @@
 #include <stdio.h>
 #endif
 
+struct RGB_colour {
+    uint8_t r;
+    uint8_t g;
+    uint8_t b;
+};
 
 class RGBMatrixRenderer
 {
     //variables
     public:
-        uint8_t r;
-        uint8_t g;
-        uint8_t b;
     protected:
         uint16_t gridWidth;
         uint16_t gridHeight;
@@ -57,15 +59,15 @@ class RGBMatrixRenderer
         uint16_t getGridWidth();
         uint16_t getGridHeight();
         uint8_t getMaxBrightness();
-        virtual void setPixel(uint16_t, uint16_t, uint8_t, uint8_t, uint8_t) = 0;
+        virtual void setPixel(uint16_t, uint16_t, RGB_colour) = 0;
         virtual void showPixels() = 0;
         virtual void msSleep(int) = 0;
         virtual void outputMessage(char[]) = 0;
         virtual int16_t random_int16(int16_t a, int16_t b) = 0;
-        void setRandomColour();
+        RGB_colour getRandomColour();
         uint16_t newPositionX(uint16_t,uint16_t,bool=true);
         uint16_t newPositionY(uint16_t,uint16_t,bool=true);
-        uint8_t blendColour(uint8_t,uint8_t,uint8_t,uint8_t);
+        RGB_colour blendColour(RGB_colour,RGB_colour,uint8_t,uint8_t);
     protected:
     private:
         uint16_t newPosition(uint16_t,uint16_t,uint16_t,bool);
