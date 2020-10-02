@@ -14,11 +14,11 @@ make
 ```
 Run the simplecrawler example with the command line (suitable for a Raspberry Pi 4):
 ```bash
-sudo ./simplecrawler --led-slowdown-gpio=4 -m 30
+sudo ./simplecrawl --led-slowdown-gpio=4
 ```
 The command line options are explained under the demo project in rpi-rgb-led-matrix/examples-api-use, or run the example with this command for a summary of command line options:
 ```bash
-sudo ./simplecrawler -h
+sudo ./simplecrawl -h
 ```
 The other examples also explain their own command line options (if you enter -h, or any options that are invalid). Try the Game of Life:
 ```bash
@@ -26,5 +26,5 @@ sudo ./gol --led-slowdown-gpio=4
 ```
 Try Falling Sand:
 ```bash
-sudo ./sand --led-slowdown-gpio=4 -n 200 -g 10 -s 5
+sudo ./sand --led-slowdown-gpio=4 -n 200 -g 50 -s 10
 ```
