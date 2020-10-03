@@ -69,12 +69,15 @@ class GameOfLife
         uint32_t iterationsMin = 4294967295;
         uint32_t iterationsMax = 0;
         uint16_t panelSize;
+        bool startOver;
     //functions
     public:
         GameOfLife(RGBMatrixRenderer&,uint8_t,uint16_t);
         ~GameOfLife();
         void runCycle();
+        void restart();
         bool getCellState(uint16_t,uint16_t);
+        RGB_colour getCellColour();
     protected:
     private:
         void initialiseGrid(uint8_t);

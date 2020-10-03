@@ -44,6 +44,7 @@ GameOfLife::GameOfLife(RGBMatrixRenderer &renderer_, uint8_t fadeSteps_, uint16_
     //Initialise member variables
     fadeSteps = fadeSteps_;
     delayms = delay_;
+    startOver = true;
 
     panelSize = renderer.getGridHeight();
     if (renderer.getGridWidth() < panelSize)
@@ -87,7 +88,7 @@ void GameOfLife::runCycle()
     *  - Population cycles over a 4 step cycle for over 3xPanel size frames
     *  - Pattern cycles over 6-24 frames for over 150 cycles
     */
-    if ( (alive == 0) || (unchangedCount > 5 ) || (repeat2Count > 6) || (repeat3Count > 35) 
+    if ( startOver || (alive == 0) || (unchangedCount > 5 ) || (repeat2Count > 6) || (repeat3Count > 35) 
         || (unchangedPopulation[0] > panelSize*10) || ( (unchangedPopulation[0] > panelSize*4) && (alive == 5 ) ) 
         || (unchangedPopulation[3] > panelSize*3) || (maxRepeatsCount > 150) )
     {
@@ -110,19 +111,19 @@ void GameOfLife::runCycle()
             sprintf(msgEnd, "Pattern repeated over 3 frames\n");
         else if (unchangedPopulation[0] > panelSize*10)
         {
-            sprintf(msgEnd, "Population static over %d %s", (panelSize*10), "frames\n");
+            sprintf(msgEnd, "Population static over %d frames\n", (panelSize*10) );
         }
         else if ( (unchangedPopulation[0] > panelSize*4) && (alive == 5 ) )
         {
-            sprintf(msgEnd, "Population static over %d %s", (panelSize*4), "frames with 5 cells exactly\n");
+            sprintf(msgEnd, "Population static over %d frames with 5 cells exactly\n", (panelSize*4) );
         }
         else if (unchangedPopulation[3] > panelSize*3) 
         {
-            sprintf(msgEnd, "Population repeated over 4 step cycle %d %s", (panelSize*3), "x\n");
+            sprintf(msgEnd, "Population repeated over 4 step cycle %d x\n", (panelSize*3) );
         }
         else if (maxRepeatsCount > 150)
         {
-            sprintf(msgEnd, "Population repeated over %d %s", (maxContributor+1), "step cycle 150x\n");
+            sprintf(msgEnd, "Population repeated over %d step cycle 150x\n", (maxContributor+1) );
         }
         
         char msg[255];
@@ -194,7 +195,9 @@ void GameOfLife::runCycle()
     if (alive == 0)
     {
       //Pause to show end of population before it gets reset
-      renderer.msSleep(4000); 
+      uint16_t waitLength = delayms * 100;
+      if (waitLength > 3000) waitLength = 3000;
+      renderer.msSleep(waitLength); 
     }
 
     iterations++;
@@ -466,6 +469,8 @@ void GameOfLife::initialiseGrid(uint8_t patternIdx)
         }
     }
 
+    //Clear restart flag
+    startOver = false;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -644,4 +649,14 @@ void GameOfLife::fadeInChanges()
 bool GameOfLife::getCellState(uint16_t x, uint16_t y)
 {
     return ( (cells[x][y] & CELL_ALIVE) != 0 );
+}
+
+RGB_colour GameOfLife::getCellColour()
+{
+    return cellColour;
+}
+
+void GameOfLife::restart()
+{
+    startOver = true;
 }
