@@ -55,23 +55,29 @@ uint64_t micros()
 // using the syntax *this
 class Animation : public ThreadedCanvasManipulator, public RGBMatrixRenderer {
     public:
-        Animation(Canvas *m, uint16_t width, uint16_t height, int delay_ms, int accel_, int shake, int numGrains)
+        Animation(Canvas *m, uint16_t width, uint16_t height, uint16_t delay_ms, int16_t accel_, uint16_t shake, uint16_t numGrains_)
             : ThreadedCanvasManipulator(m), RGBMatrixRenderer{width,height}, delay_ms_(delay_ms), animation(*this,shake), 
               ax(0), ay(0)
         {
-            
             accel = accel_;
             counter = 0;
             angle = 0;
             cycles = 100000;
+            numGrains = numGrains_;
+        }
+        
+        virtual ~Animation(){}
+
+        void Run() {
+            uint8_t MAX_FPS=1000/delay_ms_;    // Maximum redraw rate, frames/second
 
             //Create some static pixels
             RGB_colour red = {255,0,0};
             int wd = 6;
             for (int y=10; y<22;y++) {
                 for (int x=8; x<8+wd+1;x++) {
-                    animation.setStaticPixel(x,y,red);
-                    animation.setStaticPixel(31-x,y,red);
+                    setPixelColour(x,y,red);
+                    setPixelColour(31-x,y,red);
                 }
                 if (y%2) wd--;
             }
@@ -93,14 +99,8 @@ class Animation : public ThreadedCanvasManipulator, public RGBMatrixRenderer {
             }
 
             //Show LEDs and pause before starting animation
-            animation.updateDisplay();
+            updateDisplay();
             msSleep(1000);
-        }
-        
-        virtual ~Animation(){}
-
-        void Run() {
-            uint8_t MAX_FPS=1000/delay_ms_;    // Maximum redraw rate, frames/second
 
             while (running() && !interrupt_received) {
                 //Update acceleration every few cycles
@@ -159,11 +159,6 @@ class Animation : public ThreadedCanvasManipulator, public RGBMatrixRenderer {
             }
         }
 
-        virtual void setPixel(uint16_t x, uint16_t y, RGB_colour colour) 
-        {
-            canvas()->SetPixel(x, gridHeight - y - 1, colour.r, colour.g, colour.b);
-        }
-
         virtual void showPixels() {
             //Nothing to do for RGB matrix type displays as pixel changes are shown immediately
         }
@@ -184,7 +179,13 @@ class Animation : public ThreadedCanvasManipulator, public RGBMatrixRenderer {
         int delay_ms_;
         FallingSand animation;
         int16_t ax,ay, accel, angle;
+        uint16_t numGrains;
         uint32_t counter, cycles;
+
+        virtual void setPixel(uint16_t x, uint16_t y, RGB_colour colour) 
+        {
+            canvas()->SetPixel(x, gridHeight - y - 1, colour.r, colour.g, colour.b);
+        }
 };
 
 
@@ -210,8 +211,8 @@ static int usage(const char *progname) {
 int main(int argc, char *argv[]) {
     int runtime_seconds = -1;
     int scroll_ms = 10;
-    int accel = 0;
-    int shake = 0;
+    int accel = 50;
+    int shake = 10;
     int numGrains = 4;
 
     srand(time(NULL));

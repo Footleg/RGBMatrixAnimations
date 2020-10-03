@@ -30,11 +30,24 @@
 // default constructor
 RGBMatrixRenderer::RGBMatrixRenderer(uint16_t width, uint16_t height, uint8_t maxBrightness)
     : gridWidth(width), gridHeight(height), maxBrightness(maxBrightness)
-{} //RGBMatrixRenderer
+{
+    // Allocate memory for colour palette array
+    palette = new RGB_colour[256];
+    palette[0] = RGB_colour{0,0,0};
+    coloursDefined = 0;
+    
+    // Allocate memory for pixels array
+    img = new uint8_t[width * height];
+
+    clearImage();
+
+} //RGBMatrixRenderer
 
 // default destructor
 RGBMatrixRenderer::~RGBMatrixRenderer()
 {
+    delete [] palette;
+    delete [] img;
 } //~RGBMatrixRenderer
 
 uint16_t RGBMatrixRenderer::getGridWidth()
@@ -128,4 +141,118 @@ RGB_colour RGBMatrixRenderer::blendColour(RGB_colour start, RGB_colour end, uint
 
   return RGB_colour{r,g,b};
 
+}
+
+RGB_colour RGBMatrixRenderer::getColour(uint8_t id)
+{
+    RGB_colour colour = {0,0,0};
+
+    if (id <= coloursDefined) {
+        colour = palette[id];
+    }
+
+    return colour;
+}
+
+uint8_t RGBMatrixRenderer::getColourId(RGB_colour colour)
+{
+//char msg[64];
+   //Search palette for matching colour (black is always zero)
+    uint8_t id = 0;
+    if ( (colour.r !=0) || (colour.g !=0) || (colour.b !=0) ) {
+        for (uint8_t i=1; i<=coloursDefined; i++) {
+            if ( (palette[i].r == colour.r)
+            && (palette[i].g == colour.g) 
+            && (palette[i].b == colour.b) ) {
+                id = i;
+                break;
+            }
+        }
+        
+        //If match not found, add to palette if room
+        /* I can't see why, but this hangs if we let coloursDefined = 255, so capped at 254 to
+           avoid crashing the Raspberry Pi */
+        if (id == 0) {
+            if (coloursDefined < 254) {
+                coloursDefined++;
+                
+//sprintf(msg, "Adding colour: %d, %d, %d (Total: %d)\n", colour.r,  colour.g, colour.b, coloursDefined);
+//outputMessage(msg);
+                palette[coloursDefined] = colour;
+            }
+            id = coloursDefined; //For now set to last colour even if we couldn't add another one
+        }
+    }
+//sprintf(msg, "Returned colour at index: %d\n", id);
+//outputMessage(msg);
+
+    return id;
+}
+
+
+//Update Whole Matrix Display
+void RGBMatrixRenderer::updateDisplay()
+{
+    // Update pixel data on display
+//    uint16_t pixels = 0;
+    for(int y=0; y<gridHeight; y++) {
+        for(int x=0; x<gridWidth; x++) {
+            uint8_t colcode = img[y*gridWidth + x];
+            if (colcode) {
+                setPixel(x,y,getColour(colcode));
+//                pixels++;
+            }
+            else {
+                setPixel(x,y,RGB_colour{0,0,0});
+            }
+        }
+    }
+    showPixels();
+/*
+    char msg[32];
+    sprintf(msg, "Pixel count: %d\n", pixels);
+    outputMessage(msg);
+ */
+}
+
+void RGBMatrixRenderer::clearImage()
+{
+    //Clear img
+    for (uint16_t i=0; i<gridWidth * gridHeight; i++) {
+        img[i]=0;
+    }
+    //Wipe palette
+    coloursDefined = 0;
+}
+
+uint8_t RGBMatrixRenderer::getPixelValue(uint16_t index)
+{
+    return img[index];
+}
+
+uint8_t RGBMatrixRenderer::getPixelValue(uint16_t x, uint16_t y)
+{
+    return img[y*gridWidth + x];
+}
+
+void RGBMatrixRenderer::setPixelValue(uint16_t index, uint8_t value)
+{
+    img[index] = value;
+}
+
+// Sets pixel colour in memory only (will not show changes until update display called)
+void RGBMatrixRenderer::setPixelColour(uint16_t x, uint16_t y, RGB_colour colour)
+{
+    img[y * gridWidth + x] = getColourId(colour);
+/*    char msg[80];
+    sprintf(msg, "Set img pixel: %d Colour: %d,%d,%d\n", y * gridWidth + x, colour.r, colour.g, colour.b );
+    outputMessage(msg);
+ */
+}
+
+// Sets pixel colour directly on display. Faster and non-persistent as in memory display
+// buffer does not get updated with the change
+void RGBMatrixRenderer::setPixelInstant(uint16_t x, uint16_t y, RGB_colour colour)
+{
+    setPixel(x,y,colour);
 }

@@ -128,76 +128,80 @@ void GameOfLife::runCycle()
         
         char msg[255];
         sprintf(msg, "Pattern terminated after %lu iterations (min: %lu, max: %lu): %s",
-                iterations, iterationsMin, iterationsMax, msgEnd);
+                (unsigned long)iterations, (unsigned long)iterationsMin, (unsigned long)iterationsMax, msgEnd);
         if (iterations > 0)
             renderer.outputMessage(msg);
 
-        initialiseGrid(renderer.random_int16(0,8));
+        //initialiseGrid(renderer.random_int16(0,8));
+        initialiseGrid(0);
         
     }
-
-    if ((delayms < 5) && ( (alive == 0) || (unchangedCount > 5 ) || (repeat2Count > 6) || (repeat3Count > 10) 
-        || (unchangedPopulation[0] > 10)  
-        || (unchangedPopulation[3] > 10) || (maxRepeatsCount > 20) ) )
-    {
-        //Debug delay
-        renderer.msSleep(100);
-    }
-
-    //Apply rules of Game of Life to determine cells dying and being born
-    for(y = 0; y < renderer.getGridHeight(); ++y)
-    {
-        for(x = 0; x < renderer.getGridWidth(); ++x)
+    else {
+        //Run and update cycle
+        if ((delayms < 5) && ( (alive == 0) || (unchangedCount > 5 ) || (repeat2Count > 6) || (repeat3Count > 10) 
+            || (unchangedPopulation[0] > 10)  
+            || (unchangedPopulation[3] > 10) || (maxRepeatsCount > 20) ) )
         {
-            //For each cell, count neighbours, including wrapping over grid edges
-            neighbours = -1;
-            for(xi = -1; xi < 2; ++xi)
+            //Debug delay
+            renderer.msSleep(100);
+        }
+
+        //Apply rules of Game of Life to determine cells dying and being born
+        for(y = 0; y < renderer.getGridHeight(); ++y)
+        {
+            for(x = 0; x < renderer.getGridWidth(); ++x)
             {
-                xt = renderer.newPositionX(x, xi);
-                for(yi = -1; yi < 2; ++yi)
+                //For each cell, count neighbours, including wrapping over grid edges
+                neighbours = -1;
+                for(xi = -1; xi < 2; ++xi)
                 {
-                    yt = renderer.newPositionY(y, yi);
-                    if ( (cells[xt][yt] & CELL_ALIVE) != 0 )
+                    xt = renderer.newPositionX(x, xi);
+                    for(yi = -1; yi < 2; ++yi)
                     {
-                        ++neighbours;
+                        yt = renderer.newPositionY(y, yi);
+                        if ( (cells[xt][yt] & CELL_ALIVE) != 0 )
+                        {
+                            ++neighbours;
+                        }
                     }
                 }
-            }
 
-            //Reset changes arrays for this cell
-            cells[x][y] &= ~CELL_BIRTH;
-            cells[x][y] &= ~CELL_DEATH;
-            if ( ((cells[x][y] & CELL_ALIVE) != 0) && (neighbours < 2) )
-            {
-                //Populated cell with too few neighbours, so it will die
-                cells[x][y] |= CELL_DEATH; //turn on kill bit
+                //Reset changes arrays for this cell
+                cells[x][y] &= ~CELL_BIRTH;
+                cells[x][y] &= ~CELL_DEATH;
+                if ( ((cells[x][y] & CELL_ALIVE) != 0) && (neighbours < 2) )
+                {
+                    //Populated cell with too few neighbours, so it will die
+                    cells[x][y] |= CELL_DEATH; //turn on kill bit
 
-            }
-            else if ( ((cells[x][y] & CELL_ALIVE) == 0) && (neighbours == 2) ) 
-            {
-                //Empty cell with exactly 3 neighbours (count = 2 as did not count itself so was initialised as -1)
-                cells[x][y] |= CELL_BIRTH; //turn on spawn bit
-            }
-            else if ( ((cells[x][y] & CELL_ALIVE) != 0) && (neighbours > 3) )
-            {
-                //Populated cell with too many neighbours, so it will die
-                cells[x][y] |= CELL_DEATH; //turn on kill bit
+                }
+                else if ( ((cells[x][y] & CELL_ALIVE) == 0) && (neighbours == 2) ) 
+                {
+                    //Empty cell with exactly 3 neighbours (count = 2 as did not count itself so was initialised as -1)
+                    cells[x][y] |= CELL_BIRTH; //turn on spawn bit
+                }
+                else if ( ((cells[x][y] & CELL_ALIVE) != 0) && (neighbours > 3) )
+                {
+                    //Populated cell with too many neighbours, so it will die
+                    cells[x][y] |= CELL_DEATH; //turn on kill bit
+                }
             }
         }
-    }
 
-    //Fade cells in/out for births/deaths if fade steps set
-    if (fadeSteps > 1)
-        fadeInChanges();
+        //Fade cells in/out for births/deaths if fade steps set
+        if (fadeSteps > 1)
+            fadeInChanges();
 
-    applyChanges();
-    
-    if (alive == 0)
-    {
-      //Pause to show end of population before it gets reset
-      uint16_t waitLength = delayms * 100;
-      if (waitLength > 3000) waitLength = 3000;
-      renderer.msSleep(waitLength); 
+        applyChanges();
+        renderer.updateDisplay();
+
+        if (alive == 0)
+        {
+        //Pause to show end of population before it gets reset
+        uint16_t waitLength = delayms * 100;
+        if (waitLength > 3000) waitLength = 3000;
+        renderer.msSleep(waitLength); 
+        }
     }
 
     iterations++;
@@ -210,6 +214,9 @@ void GameOfLife::initialiseGrid(uint8_t patternIdx)
 {
     const bool X = true;
     const bool O = false;
+
+    //Wipe img to reset palette
+    renderer.clearImage();
 
     alive = 0;
     iterations = 0;
@@ -245,13 +252,13 @@ void GameOfLife::initialiseGrid(uint8_t patternIdx)
                 if (randNumber < 15)
                 {
                     cells[x][y] = CELL_ALIVE;
-                    renderer.setPixel(x, y, cellColour);
+                    renderer.setPixelColour(x, y, cellColour);
                     alive++;
                 }
                 else
                 {
                     cells[x][y] = 0;
-                    renderer.setPixel(x, y, RGB_colour{0,0,0} );
+                    renderer.setPixelColour(x, y, RGB_colour{0,0,0} );
                 }
             }
         }
@@ -446,14 +453,14 @@ void GameOfLife::initialiseGrid(uint8_t patternIdx)
                         && (pattern[(16 - 1 - y+offsetY)*16 + x-offsetX]) ) 
                     {
                         cells[x][y] |= CELL_ALIVE;
-                        renderer.setPixel(x, y, cellColour);
+                        renderer.setPixelColour(x, y, cellColour);
                         alive++;
                     }
                     else 
                     {
                         //Clear cells in pattern
                         cells[x][y] &= ~CELL_ALIVE;
-                        renderer.setPixel(x, y, RGB_colour{0,0,0} );
+                        renderer.setPixelColour(x, y, RGB_colour{0,0,0} );
                     }
                 }
             }
@@ -463,11 +470,13 @@ void GameOfLife::initialiseGrid(uint8_t patternIdx)
                 { 
                     //Clear cells outside pattern
                     cells[x][y] &= ~CELL_ALIVE;
-                    renderer.setPixel(x, y, RGB_colour{0,0,0} );
+                    renderer.setPixelColour(x, y, RGB_colour{0,0,0} );
                 }
             }
         }
     }
+
+    renderer.updateDisplay();
 
     //Clear restart flag
     startOver = false;
@@ -509,8 +518,7 @@ void GameOfLife::applyChanges()
             if ((cells[x][y] & CELL_BIRTH) != 0)
             {
                 cells[x][y] |= CELL_ALIVE;
-                if (fadeSteps < 2) 
-                    renderer.setPixel(x, y, cellColour);
+                renderer.setPixelColour(x, y, cellColour);
                 ++changes;
                 ++alive;
             }
@@ -518,8 +526,7 @@ void GameOfLife::applyChanges()
             {
                 //Kill dying cells
                 cells[x][y] &= ~CELL_ALIVE;
-                if (fadeSteps < 2) 
-                    renderer.setPixel(x, y, RGB_colour{0,0,0} );
+                renderer.setPixelColour(x, y, RGB_colour{0,0,0} );
                 ++changes;
                 --alive;
             }
@@ -630,18 +637,22 @@ void GameOfLife::fadeInChanges()
             {
                 if ((cells[x][y] & CELL_BIRTH) != 0)
                 {
-                    renderer.setPixel(x, y, born);
+                    renderer.setPixelInstant(x, y, born);
                 }
                 else if ((cells[x][y] & CELL_DEATH) != 0)
                 {
-                    renderer.setPixel(x, y, died);
+                    renderer.setPixelInstant(x, y, died);
                 }
             }
         }
-        
+/*
+char msg[100];
+sprintf(msg, "Born col: %d,%d,%d Dead col: %d,%d,%d\n", born.r, born.g, born.b, died.r, died.g, died.b );
+renderer.outputMessage(msg);
+*/      
         //if (delayms * fadeSteps > 1000) fadeDelay = 1000 / fadeSteps;
 
-        renderer.showPixels();
+        //renderer.updateDisplay();
         renderer.msSleep(fadeDelay);
     }
 }

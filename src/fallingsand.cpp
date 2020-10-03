@@ -33,13 +33,6 @@
 FallingSand::FallingSand(RGBMatrixRenderer &renderer_, int16_t shake_)
     : renderer(renderer_)
 {
-    // Allocate memory for colour palette array
-    palette = new RGB_colour[255];
-    coloursDefined = 0;
-    
-    // Allocate memory for pixels array
-    img = new uint8_t[renderer.getGridWidth() * renderer.getGridHeight()];
-
     // Allocate initial memory for grains array
     uint16_t max = renderer.getGridWidth() * renderer.getGridHeight();
     if (max < 100) {
@@ -61,37 +54,13 @@ FallingSand::FallingSand(RGBMatrixRenderer &renderer_, int16_t shake_)
     numGrains = 0;
     shake = shake_;
 
-    //Clear img
-    for (uint16_t i=0; i<renderer.getGridWidth() * renderer.getGridHeight(); i++) {
-        img[i]=0;
-    }
-
 } //FallingSand
 
 // default destructor
 FallingSand::~FallingSand()
 {
-    delete [] palette;
-    delete [] img;
     delete [] grains;
 } //~FallingSand
-
-//Update Display
-void FallingSand::updateDisplay()
-{
-    // Update pixel data on display
-    for(int y=0; y<renderer.getGridHeight(); y++) {
-        for(int x=0; x<renderer.getGridWidth(); x++) {
-            uint8_t colcode = img[y*renderer.getGridWidth() + x];
-            if (colcode) {
-                renderer.setPixel(x,y,getColour(colcode));
-            }
-            else {
-                renderer.setPixel(x,y,RGB_colour{0,0,0});
-            }
-        }
-    }
-}
 
 //Run Cycle is called once per frame of the animation
 void FallingSand::runCycle()
@@ -165,11 +134,13 @@ if (i<0) {
 
         oldidx = (grains[i].y/256) * renderer.getGridWidth() + (grains[i].x/256); // Prior pixel #
         newidx = (newy      /256) * renderer.getGridWidth() + (newx      /256); // New pixel #
-//char msg[100];
-//sprintf(msg, "Grain %d: Old %d  (Calc %d)\n", i, oldidx, (grains[i].y/256) * renderer.getGridWidth() + (grains[i].x/256) );
-//renderer.outputMessage(msg);
-        if((oldidx != newidx) && // If grain is moving to a new pixel...
-            img[newidx]) 
+if (i<0) {
+    char msg[100];
+    sprintf(msg, "Grain %d: OldIdx %d  NewIDx %d)\n", i, oldidx, newidx );
+    renderer.outputMessage(msg);
+}
+        if((oldidx != newidx) // If grain is moving to a new pixel...
+            && renderer.getPixelValue(newidx) ) 
         {       // but if that pixel is already occupied...
             delta = abs(newidx - oldidx); // What direction when blocked?
             if(delta == 1) {            // 1 pixel left or right)
@@ -187,12 +158,12 @@ if (i<0) {
                 // change the pixel index, no need to check that again.
                 if((abs(grains[i].vx) - abs(grains[i].vy)) >= 0) { // X axis is faster
                     newidx = (grains[i].y / 256) * renderer.getGridWidth() + (newx / 256);
-                    if(!img[newidx]) { // That pixel's free!  Take it!  But...
+                    if(!renderer.getPixelValue(newidx)) { // That pixel's free!  Take it!  But...
                         newy         = grains[i].y; // Cancel Y motion
                         grains[i].vy /= -2;         // and bounce Y velocity
                     } else { // X pixel is taken, so try Y...
                         newidx = (newy / 256) * renderer.getGridWidth() + (grains[i].x / 256);
-                        if(!img[newidx]) { // Pixel is free, take it, but first...
+                        if(!renderer.getPixelValue(newidx)) { // Pixel is free, take it, but first...
                         newx         = grains[i].x; // Cancel X motion
                         grains[i].vx /= -2;         // and bounce X velocity
                         } else { // Both spots are occupied
@@ -205,12 +176,12 @@ if (i<0) {
                     }
                 } else { // Y axis is faster, start there
                     newidx = (newy / 256) * renderer.getGridWidth() + (grains[i].x / 256);
-                    if(!img[newidx]) { // Pixel's free!  Take it!  But...
+                    if(!renderer.getPixelValue(newidx)) { // Pixel's free!  Take it!  But...
                         newx         = grains[i].x; // Cancel X motion
                         grains[i].vy /= -2;         // and bounce X velocity
                     } else { // Y pixel is taken, so try X...
                         newidx = (grains[i].y / 256) * renderer.getGridWidth() + (newx / 256);
-                        if(!img[newidx]) { // Pixel is free, take it, but first...
+                        if(!renderer.getPixelValue(newidx)) { // Pixel is free, take it, but first...
                             newy         = grains[i].y; // Cancel Y motion
                             grains[i].vy /= -2;         // and bounce Y velocity
                         } else { // Both spots are occupied
@@ -227,16 +198,16 @@ if (i<0) {
         grains[i].x  = newx; // Update grain position
         grains[i].y  = newy;
         if (oldidx != newidx) {
-            uint8_t colcode = img[oldidx];
-            img[oldidx] = 0;       // Clear old spot
-            img[newidx] = colcode; // Set new spot
+            uint8_t colcode = renderer.getPixelValue(oldidx);
+            renderer.setPixelValue(oldidx, 0);       // Clear old spot
+            renderer.setPixelValue(newidx, colcode); // Set new spot
         }
 //sprintf(msg, "Chang %d: %d -> %d\n", i, oldidx, newidx );
 //renderer.outputMessage(msg);
     }
 
     //Update LEDs
-    updateDisplay();
+    renderer.updateDisplay();
 }
 
 void FallingSand::setAcceleration(int16_t x, int16_t y)
@@ -272,10 +243,10 @@ void FallingSand::addGrain(RGB_colour colour)
 /*        char msg[50];
         sprintf(msg, "Random place attempt %d\n", attempts);
         renderer.outputMessage(msg);*/
-    } while ( (img[y * renderer.getGridWidth() + x]) && (attempts < 2001) ); // Keep retrying until a clear spot is found
+    } while ( (renderer.getPixelValue(y * renderer.getGridWidth() + x)) && (attempts < 2001) ); // Keep retrying until a clear spot is found
     
     //Add grain if free position was found
-    if ( (img[y * renderer.getGridWidth() + x]) == false ) {
+    if ( (renderer.getPixelValue(y * renderer.getGridWidth() + x)) == false ) {
         addGrain(x,y,colour);
     }
     else {
@@ -310,10 +281,10 @@ void FallingSand::addGrain(uint16_t x, uint16_t y, RGB_colour colour)
     grains[i].y = (y * 256)+renderer.random_int16(0,255); // the 'grain' coordinate space
     numGrains++;
     grains[i].vx = grains[i].vy = 0; // Initial velocity is zero
-    img[(grains[i].y / 256) * renderer.getGridWidth() + (grains[i].x / 256)] = getColourId(colour); // Mark it
+    renderer.setPixelValue( (grains[i].y / 256) * renderer.getGridWidth() + (grains[i].x / 256), renderer.getColourId(colour) ); // Mark it
 /*
 char msg[100];
-sprintf(msg, "Grains placed %d,%d colour:%d; Total:%d\n", int(grains[i].x), int(grains[i].y), int(img[(grains[i].y / 256) * renderer.getGridWidth() + (grains[i].x / 256)]), numGrains );
+sprintf(msg, "Grain placed %d,%d (%d,%d) colour:%d; Total:%d\n", x,y, int(grains[i].x), int(grains[i].y), renderer.getColourId(colour), numGrains );
 renderer.outputMessage(msg);
 */
 }
@@ -323,51 +294,10 @@ uint16_t FallingSand::getGrainCount()
     return numGrains;
 }
 
-void FallingSand::setStaticPixel(uint16_t x, uint16_t y, RGB_colour colour)
-{
-    img[y * renderer.getGridWidth() + x] = getColourId(colour); // Mark it
-}
-
 void FallingSand::clearGrains()
 {
     //Simply set number of grains to zero
     numGrains = 0;
-}
-
-uint8_t FallingSand::getColourId(RGB_colour colour)
-{
-    //Search palette for matching colour
-    uint8_t id = 0;
-    for (uint8_t i=1; i<coloursDefined+1; i++) {
-        if ( (palette[i].r == colour.r)
-          && (palette[i].g == colour.g) 
-          && (palette[i].b == colour.b) ) {
-            id = i;
-            break;
-        }
-    }
-
-    //If match not found, add to palette if room
-    if (id == 0) {
-        if (coloursDefined < 255) {
-            coloursDefined++;
-            palette[coloursDefined] = colour;
-        }
-        id = coloursDefined; //For now set to last colour even if we couldn't add another one
-    }
-
-    return id;
-}
-
-RGB_colour FallingSand::getColour(uint8_t id)
-{
-    RGB_colour colour = {0,0,0};
-
-    if (id <= coloursDefined) {
-        colour = palette[id];
-    }
-
-    return colour;
 }
 
 void FallingSand::imgToGrains()
@@ -375,9 +305,9 @@ void FallingSand::imgToGrains()
     //Convert all pixels in current image to grains
     for(int y=0; y<renderer.getGridHeight(); y++) {
         for(int x=0; x<renderer.getGridWidth(); x++) {
-            uint8_t colcode = img[y*renderer.getGridWidth() + x];
+            uint8_t colcode = renderer.getPixelValue(x,y);
             if (colcode > 0) {
-                addGrain(x,y,getColour(colcode));
+                addGrain(x,y,renderer.getColour(colcode));
             }
         }
     }

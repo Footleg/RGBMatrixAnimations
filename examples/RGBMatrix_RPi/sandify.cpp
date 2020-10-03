@@ -29,12 +29,11 @@
 #include "pixel-mapper.h"
 #include "graphics.h"
 
-#include "fallingsand.h" 
-#include "golife.h" 
+#include "fallingsand.h"
+#include "golife.h"
+#include "crawler.h"
 
 using namespace rgb_matrix;
-
-uint64_t prevTime  = 0;      // Used for frames-per-second throttle
 
 uint8_t backbuffer = 0;      // Index for double-buffered animation
 
@@ -51,14 +50,14 @@ uint64_t micros()
     return us; 
 }
 
-// RGB Matrix class which pass itself as a renderer implementation into the GOL class
-// Passing as a reference into gol class, so need to dereference 'this' which is a pointer
+// RGB Matrix class which pass itself as a renderer implementation into the animation classes
+// Passing as a reference into animation class, so need to dereference 'this' which is a pointer
 // using the syntax *this
 class Animation : public ThreadedCanvasManipulator, public RGBMatrixRenderer {
     public:
         Animation(Canvas *m, uint16_t width, uint16_t height, int delay_ms, int accel_, int shake, int numGrains)
             : ThreadedCanvasManipulator(m), RGBMatrixRenderer{width,height}, delay_ms_(delay_ms), animSand(*this,shake), 
-              animGol(*this,20,delay_ms_)
+              animGol(*this,20,delay_ms_), animCrawl(*this)
         {
             
             accel = accel_;
@@ -71,16 +70,27 @@ class Animation : public ThreadedCanvasManipulator, public RGBMatrixRenderer {
         void Run() {
             uint8_t MAX_FPS=1000/delay_ms_;    // Maximum redraw rate, frames/second
             counter = 0;
-            prevTime = micros();
+            uint64_t prevTime = micros();
+            uint64_t prevTime2 = micros();
 
             while (running() && !interrupt_received) {
 
-                if (modeSand) {
-                    animSand.runCycle();
-                }
-                else {
-                    animGol.runCycle();
-                    usleep(delay_ms_ * 1000); // ms
+                switch (mode) {
+                    case 0:
+                        animGol.runCycle();
+                        usleep(delay_ms_ * 1000); // ms
+                        break;
+                    case 2:
+                        animCrawl.runCycle();
+                        usleep(delay_ms_ * 1000); // ms
+                        break;
+                    default:
+                        animSand.runCycle();
+                        if (micros() - prevTime2 > 1200000) {
+                            prevTime2 = micros();
+                            animSand.setAcceleration( random_int16(-accel,accel), random_int16(-accel,accel) );  
+                        }
+                        break;
                 }
 
                 //Switch mode every now and then
@@ -88,28 +98,19 @@ class Animation : public ThreadedCanvasManipulator, public RGBMatrixRenderer {
                 //fprintf(stderr,"Count=%d Cycles=%d\n", counter,cycles );
                 if (counter > cycles) {
                     counter = 0;
-                    if (modeSand) {
-                        //Switch back to GOL
-                        modeSand = false;
-                    }
-                    else {
-                        //Switch to Sand
-                        modeSand = true;
-                        animSand.setAcceleration( random_int16(-accel,accel), random_int16(-accel,accel) );  
-
-                        //Turn cells into grains
-                        animSand.clearGrains();
-                        for(int y = 0; y < gridHeight; ++y)
-                        {
-                            for(int x = 0; x < gridWidth; ++x)
-                            {
-                                if (animGol.getCellState(x,y))
-                                {   
-                                    animSand.addGrain(x,y,getRandomColour());
-                                }
-                            }
-                        }
-                                    
+                    mode++;
+                    if (mode > 3) mode = 0;
+                    switch (mode) {
+                        case 0:
+                            animGol.restart();
+                            break;
+                            break;
+                        case 2:
+                            clearImage();
+                            break;
+                        default:
+                            //Turn cells into grains
+                            animSand.imgToGrains();
                     }
                     
                 }
@@ -124,14 +125,9 @@ class Animation : public ThreadedCanvasManipulator, public RGBMatrixRenderer {
                 prevTime = micros();
 
                 //Reset cycles before acceleration is changed based on speed of update
-                cycles = 10000000 / t;
+                cycles = 8000000 / t;
                 if (accel < 5) cycles = 2*cycles;
             }
-        }
-
-        virtual void setPixel(uint16_t x, uint16_t y, RGB_colour colour) 
-        {
-            canvas()->SetPixel(x, gridHeight - y - 1, colour.r, colour.g, colour.b);
         }
 
         virtual void showPixels() {
@@ -154,9 +150,15 @@ class Animation : public ThreadedCanvasManipulator, public RGBMatrixRenderer {
         int delay_ms_;
         FallingSand animSand;
         GameOfLife animGol;
+        Crawler animCrawl;
         int16_t accel;
         uint32_t counter, cycles;
-        bool modeSand = false;
+        uint8_t mode = 0;
+
+        virtual void setPixel(uint16_t x, uint16_t y, RGB_colour colour) 
+        {
+            canvas()->SetPixel(x, gridHeight - y - 1, colour.r, colour.g, colour.b);
+        }
 };
 
 

@@ -42,7 +42,7 @@ static void InterruptHandler(int signo) {
 // using the syntax *this
 class Animation : public ThreadedCanvasManipulator, public RGBMatrixRenderer {
     public:
-        Animation(Canvas *m, int width, int height, int delay_ms=500)
+        Animation(Canvas *m, uint16_t width, uint16_t height, uint16_t delay_ms=500)
             : ThreadedCanvasManipulator(m), RGBMatrixRenderer{width,height}, delay_ms_(delay_ms), animation(*this)
         {}
 
@@ -53,11 +53,6 @@ class Animation : public ThreadedCanvasManipulator, public RGBMatrixRenderer {
                 animation.runCycle();
                 usleep(delay_ms_ * 1000); // ms
             }
-        }
-
-        virtual void setPixel(uint16_t x, uint16_t y, RGB_colour colour) 
-        {
-            canvas()->SetPixel(x, gridHeight - y - 1, colour.r, colour.g, colour.b);
         }
 
         virtual void showPixels() {
@@ -77,8 +72,13 @@ class Animation : public ThreadedCanvasManipulator, public RGBMatrixRenderer {
         }
 
     private:
-        int delay_ms_;
+        uint16_t delay_ms_;
         Crawler animation;
+
+        virtual void setPixel(uint16_t x, uint16_t y, RGB_colour colour) 
+        {
+            canvas()->SetPixel(x, gridHeight - y - 1, colour.r, colour.g, colour.b);
+        }
 };
 
 
