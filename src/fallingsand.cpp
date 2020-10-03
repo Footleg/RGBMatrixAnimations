@@ -369,3 +369,17 @@ RGB_colour FallingSand::getColour(uint8_t id)
 
     return colour;
 }
+
+void FallingSand::imgToGrains()
+{
+    //Convert all pixels in current image to grains
+    for(int y=0; y<renderer.getGridHeight(); y++) {
+        for(int x=0; x<renderer.getGridWidth(); x++) {
+            uint8_t colcode = img[y*renderer.getGridWidth() + x];
+            if (colcode > 0) {
+                addGrain(x,y,getColour(colcode));
+            }
+        }
+    }
+
+}

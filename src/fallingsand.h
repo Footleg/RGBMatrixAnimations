@@ -75,6 +75,7 @@ class FallingSand
         void clearGrains();
         uint16_t getGrainCount();
         void setStaticPixel(uint16_t,uint16_t,RGB_colour);
+        void imgToGrains();
     protected:
     private:
         uint8_t getColourId(RGB_colour);
