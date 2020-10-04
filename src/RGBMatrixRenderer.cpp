@@ -67,6 +67,18 @@ uint8_t RGBMatrixRenderer::getMaxBrightness()
 
 RGB_colour RGBMatrixRenderer::getRandomColour()
 {
+    //Fetches a random colour from the palette if palette is full, otherwise returns a new one
+    if (coloursDefined == 255) {
+        return getColour(random_int16(0,255));
+    }
+    else {
+        return newRandomColour();
+    }
+
+}
+
+RGB_colour RGBMatrixRenderer::newRandomColour()
+{
     // Init colour randomly
     RGB_colour colour;
     colour.r = random_int16(0,maxBrightness);
@@ -156,11 +168,15 @@ RGB_colour RGBMatrixRenderer::getColour(uint8_t id)
 
 uint8_t RGBMatrixRenderer::getColourId(RGB_colour colour)
 {
-//char msg[64];
    //Search palette for matching colour (black is always zero)
     uint8_t id = 0;
     if ( (colour.r !=0) || (colour.g !=0) || (colour.b !=0) ) {
-        for (uint8_t i=1; i<=coloursDefined; i++) {
+        for (uint16_t i=1; i<=coloursDefined; i++) {
+/*
+char msg[64];
+sprintf(msg, "Searching palette %d (size %d))\n", i, coloursDefined);
+outputMessage(msg);
+*/
             if ( (palette[i].r == colour.r)
             && (palette[i].g == colour.g) 
             && (palette[i].b == colour.b) ) {
@@ -170,22 +186,26 @@ uint8_t RGBMatrixRenderer::getColourId(RGB_colour colour)
         }
         
         //If match not found, add to palette if room
-        /* I can't see why, but this hangs if we let coloursDefined = 255, so capped at 254 to
-           avoid crashing the Raspberry Pi */
         if (id == 0) {
-            if (coloursDefined < 254) {
+            if (coloursDefined < 255) {
                 coloursDefined++;
-                
-//sprintf(msg, "Adding colour: %d, %d, %d (Total: %d)\n", colour.r,  colour.g, colour.b, coloursDefined);
-//outputMessage(msg);
+/*                
+char msg[64];
+sprintf(msg, "Adding colour: %d, %d, %d (Total: %d)\n", colour.r,  colour.g, colour.b, coloursDefined);
+outputMessage(msg);
+*/
                 palette[coloursDefined] = colour;
             }
             id = coloursDefined; //For now set to last colour even if we couldn't add another one
         }
     }
-//sprintf(msg, "Returned colour at index: %d\n", id);
-//outputMessage(msg);
-
+    /*
+if (id > 0) {
+char msg[64];
+sprintf(msg, "Returned colour at index: %d\n", id);
+outputMessage(msg);   
+}
+*/
     return id;
 }
 

@@ -75,6 +75,7 @@ class RGBMatrixRenderer
         virtual void outputMessage(char[]) = 0;
         virtual int16_t random_int16(int16_t a, int16_t b) = 0;
         RGB_colour getRandomColour();
+        RGB_colour newRandomColour();
         uint16_t newPositionX(uint16_t,uint16_t,bool=true);
         uint16_t newPositionY(uint16_t,uint16_t,bool=true);
         RGB_colour blendColour(RGB_colour,RGB_colour,uint8_t,uint8_t);
