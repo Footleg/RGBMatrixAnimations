@@ -31,15 +31,16 @@ class Crawler
     protected:
     private:
         RGBMatrixRenderer &renderer;
-        int x;
-        int y;
-        int direction;
-        int colChg = 0;
-        int dirChg = 0;
+        uint16_t x;
+        uint16_t y;
+        int8_t direction;
+        uint16_t colChg = 0;
+        uint16_t dirChg = 0;
+        uint16_t dirChgCount = 50;
         RGB_colour colour;
     //functions
     public:
-        Crawler(RGBMatrixRenderer&);
+        Crawler(RGBMatrixRenderer&,uint16_t);
         ~Crawler();
         void runCycle();
     protected:

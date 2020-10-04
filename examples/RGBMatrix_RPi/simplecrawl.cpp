@@ -42,8 +42,8 @@ static void InterruptHandler(int signo) {
 // using the syntax *this
 class Animation : public ThreadedCanvasManipulator, public RGBMatrixRenderer {
     public:
-        Animation(Canvas *m, uint16_t width, uint16_t height, uint16_t delay_ms=500)
-            : ThreadedCanvasManipulator(m), RGBMatrixRenderer{width,height}, delay_ms_(delay_ms), animation(*this)
+        Animation(Canvas *m, uint16_t width, uint16_t height, uint16_t delay_ms, uint16_t steps)
+            : ThreadedCanvasManipulator(m), RGBMatrixRenderer{width,height}, delay_ms_(delay_ms), animation(*this,steps)
         {}
 
         virtual ~Animation(){}
@@ -88,6 +88,7 @@ static int usage(const char *progname) {
     fprintf(stderr, "Options:\n");
     fprintf(stderr,
             "\t-m <msecs>                : Milliseconds pause between updates.\n"
+            "\t-s <steps>                : Change colour after this number of steps.\n"
             "\t-t <seconds>              : Run for these number of seconds, then exit.\n");
 
     rgb_matrix::PrintMatrixFlags(stderr);
@@ -101,8 +102,9 @@ static int usage(const char *progname) {
 int main(int argc, char *argv[]) {
     int runtime_seconds = -1;
     int scroll_ms = 30;
- 
-   srand(time(NULL));
+    int steps = 50;
+   
+    srand(time(NULL));
 
     RGBMatrix::Options matrix_options;
     rgb_matrix::RuntimeOptions runtime_opt;
@@ -119,7 +121,7 @@ int main(int argc, char *argv[]) {
     }
 
     int opt;
-    while ((opt = getopt(argc, argv, "dD:t:r:P:c:p:b:m:LR:")) != -1) {
+    while ((opt = getopt(argc, argv, "dD:t:r:P:c:p:b:m:s:LR:")) != -1) {
         switch (opt) {
         case 't':
         runtime_seconds = atoi(optarg);
@@ -127,6 +129,10 @@ int main(int argc, char *argv[]) {
 
         case 'm':
         scroll_ms = atoi(optarg);
+        break;
+
+        case 's':
+        steps = atoi(optarg);
         break;
 
         // These used to be options we understood, but deprecated now. Accept
@@ -187,7 +193,7 @@ int main(int argc, char *argv[]) {
     // The ThreadedCanvasManipulator objects are filling
     // the matrix continuously.
     ThreadedCanvasManipulator *image_gen = NULL;
-    image_gen = new Animation(canvas, canvas->width(), canvas->height(), scroll_ms );
+    image_gen = new Animation(canvas, canvas->width(), canvas->height(), scroll_ms, steps );
 
     // Set up an interrupt handler to be able to stop animations while they go
     // on. Note, each demo tests for while (running() && !interrupt_received) {},

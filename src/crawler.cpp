@@ -27,8 +27,8 @@
 #include <iostream>
 
 // default constructor
-Crawler::Crawler(RGBMatrixRenderer &renderer_)
-    : renderer(renderer_)
+Crawler::Crawler(RGBMatrixRenderer &renderer_, uint16_t steps)
+    : renderer(renderer_), dirChgCount(steps)
 {
     //Pick random start point
     x = rand()%renderer.getGridWidth();
@@ -124,9 +124,9 @@ void Crawler::runCycle()
     }
     //fprintf(stderr, "%s %d %s %d %s", "Pos: ", x, ",",  y, "\n" );
 
-    //Update colour every 50 steps
+    //Update colour every x steps
     colChg++;
-    if (colChg >= 50) {
+    if (colChg >= dirChgCount) {
         colChg = 0;
         colour = renderer.getRandomColour();
     }

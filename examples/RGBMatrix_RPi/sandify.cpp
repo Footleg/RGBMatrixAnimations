@@ -57,7 +57,7 @@ class Animation : public ThreadedCanvasManipulator, public RGBMatrixRenderer {
     public:
         Animation(Canvas *m, uint16_t width, uint16_t height, int delay_ms, int accel_, int shake, int numGrains)
             : ThreadedCanvasManipulator(m), RGBMatrixRenderer{width,height}, delay_ms_(delay_ms), animSand(*this,shake), 
-              animGol(*this,20,delay_ms_), animCrawl(*this)
+              animGol(*this,20,delay_ms_), animCrawl(*this,50)
         {
             
             accel = accel_;
@@ -103,7 +103,6 @@ class Animation : public ThreadedCanvasManipulator, public RGBMatrixRenderer {
                     switch (mode) {
                         case 0:
                             animGol.restart();
-                            break;
                             break;
                         case 2:
                             clearImage();
