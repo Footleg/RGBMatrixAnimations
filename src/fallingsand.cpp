@@ -24,8 +24,6 @@
  * along with this software.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <iostream>
-#include <cmath>
 
 #include "fallingsand.h"  
 

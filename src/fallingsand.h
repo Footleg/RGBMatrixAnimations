@@ -30,6 +30,8 @@
 #include "WProgram.h"
 #else
 #include <stdio.h>
+#include <iostream>
+#include <cmath>
 #endif
 
 #include <tuple>

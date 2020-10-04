@@ -652,7 +652,7 @@ renderer.outputMessage(msg);
 */      
         //if (delayms * fadeSteps > 1000) fadeDelay = 1000 / fadeSteps;
 
-        //renderer.updateDisplay();
+        renderer.showPixels();
         renderer.msSleep(fadeDelay);
     }
 }

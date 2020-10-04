@@ -24,8 +24,6 @@
 
 #include "crawler.h"
 
-#include <iostream>
-
 // default constructor
 Crawler::Crawler(RGBMatrixRenderer &renderer_, uint16_t steps)
     : renderer(renderer_), dirChgCount(steps)

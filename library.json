@@ -1,0 +1,19 @@
+{
+    "name": "RGB Matrix Animations Library",
+    "keywords": "LED,Matrix,animation",
+    "description": "Animations for any RGB LED matrix or colour screen display",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/Footleg/RGBMatrixAnimations.git"
+    },
+    "authors": [
+        {
+            "name": "Footleg",
+            "email": "drfootleg@gmail.com",
+            "url": "https://github.com/Footleg",
+            "maintainer": true
+        }
+    ],
+    "version": "0.1.0",
+    "frameworks": "arduino"
+}
