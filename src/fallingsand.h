@@ -24,6 +24,8 @@
  * along with this software.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#pragma once
+
 #if defined(ARDUINO) && ARDUINO >= 100
 #include "Arduino.h"
 #elif defined(ARDUINO)

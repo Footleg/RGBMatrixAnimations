@@ -193,19 +193,22 @@ if (i<0) {
                 }
             }
         }
-        grains[i].x  = newx; // Update grain position
-        grains[i].y  = newy;
+		//Update matrix memory and display state (before changing grain position as we need old position
         if (oldidx != newidx) {
             uint8_t colcode = renderer.getPixelValue(oldidx);
             renderer.setPixelValue(oldidx, 0);       // Clear old spot
             renderer.setPixelValue(newidx, colcode); // Set new spot
+            renderer.setPixelInstant(grains[i].x/256,grains[i].y/256, renderer.getColour(0) );       //Update on screen
+            renderer.setPixelInstant(newx/256, newy/256, renderer.getColour(colcode) ); //Update on screen
         }
+        grains[i].x  = newx; // Update grain position
+        grains[i].y  = newy;
 //sprintf(msg, "Chang %d: %d -> %d\n", i, oldidx, newidx );
 //renderer.outputMessage(msg);
     }
 
     //Update LEDs
-    renderer.updateDisplay();
+    renderer.showPixels(); //Update the display (for hardware which is not instantaneous
 }
 
 void FallingSand::setAcceleration(int16_t x, int16_t y)
@@ -220,10 +223,11 @@ void FallingSand::setAcceleration(int16_t x, int16_t y)
         velCap = maxVel;
     else
         velCap = minVelCap;
-
+/*
     char msg[255];
     sprintf(msg,"Acceleration set: %d,%d Max: %f\n", accelX, accelY, velCap );
     renderer.outputMessage(msg);
+*/
 }
 
 void FallingSand::addGrain(RGB_colour colour)

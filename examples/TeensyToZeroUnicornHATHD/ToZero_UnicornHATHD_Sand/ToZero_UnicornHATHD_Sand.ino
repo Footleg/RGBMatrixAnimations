@@ -43,6 +43,7 @@ class Animation : public RGBMatrixRenderer {
                     animSand.addGrain(x,y,RGB_colour{0,255,0});
                 }
             }
+            
         }
 
         virtual ~Animation(){}
@@ -51,6 +52,7 @@ class Animation : public RGBMatrixRenderer {
             unicorn = unicornHAT;
         }
         void animationStep() {
+            
             animSand.runCycle();
         }
 
@@ -108,6 +110,7 @@ void setup()
 
     //Pass reference to unicorn HAT to animation class
     animation.setUnicorn(unicorn);
+    animation.updateDisplay();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
