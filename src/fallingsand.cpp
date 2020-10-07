@@ -28,9 +28,25 @@
 #include "fallingsand.h"  
 
 // default constructor
-FallingSand::FallingSand(RGBMatrixRenderer &renderer_, int16_t shake_)
+FallingSand::FallingSand(RGBMatrixRenderer &renderer_, uint16_t shake_)
     : renderer(renderer_)
 {
+    int maxDim = renderer.getGridWidth();
+    if (renderer.getGridHeight() > maxDim) {
+        maxDim = renderer.getGridHeight();
+    }
+    int multiplier = 5900 / maxDim;
+    if (multiplier > 25) {
+        spaceMultiplier = 256;
+    }
+    else {
+        spaceMultiplier = 10 * multiplier;
+    }
+
+    char msg[44];
+    sprintf(msg, "Grain coordinates space multipler = %d\n", spaceMultiplier );
+    renderer.outputMessage(msg);
+
     // Allocate initial memory for grains array
     uint16_t max = renderer.getGridWidth() * renderer.getGridHeight();
     if (max < 100) {
@@ -45,10 +61,10 @@ FallingSand::FallingSand(RGBMatrixRenderer &renderer_, int16_t shake_)
     // The 'sand' grains exist in an integer coordinate space that's 256X
     // the scale of the pixel grid, allowing them to move and interact at
     // less than whole-pixel increments.
-    maxX = renderer.getGridWidth()  * 256 - 1; // Maximum X coordinate in grain space
-    maxY = renderer.getGridHeight() * 256 - 1; // Maximum Y coordinate in grain space
+    maxX = renderer.getGridWidth()  * spaceMultiplier - 1; // Maximum X coordinate in grain space
+    maxY = renderer.getGridHeight() * spaceMultiplier - 1; // Maximum Y coordinate in grain space
 
-    velCap = 256;
+    velCap = spaceMultiplier;
     numGrains = 0;
     shake = shake_;
 
@@ -109,29 +125,32 @@ if (i<0) {
     // calculations and volument of code quickly got out of hand for both
     // the tiny 8-bit AVR microcontroller and my tiny dinosaur brain.)
 
-    uint16_t        i, oldidx, newidx, delta;
-    int16_t        newx, newy;
-    
+    uint16_t i, oldidx, newidx, delta;
+    uint16_t  newx, newy; //Needs to handle positions overshooting and undershooting grid space
+    const int over = 10 * spaceMultiplier; //So buffer unsigned int to keep undershoots >=0
     for(i=0; i<numGrains; i++) {
-        newx = grains[i].x + (grains[i].vx/32); // New position in grain space
-        newy = grains[i].y + (grains[i].vy/32);
-        if(newx > maxX) {               // If grain would go out of bounds
-            newx         = maxX;          // keep it inside, and
-            grains[i].vx /= -2;             // give a slight bounce off the wall
-        } else if(newx < 0) {
-            newx         = 0;
+        newx = grains[i].x + over + (grains[i].vx/32) ; // New position in grain space
+        newy = grains[i].y + over + (grains[i].vy/32);
+        if(newx > maxX + over) {         // If grain would go out of bounds
+            newx = maxX + over;          // keep it inside, and
+            grains[i].vx /= -2;   // give a slight bounce off the wall
+        } else if(newx < over) {
+            newx = over;
             grains[i].vx /= -2;
         }
-        if(newy > maxY) {
-            newy         = maxY;
+        if(newy > maxY + over) {
+            newy = maxY + over;
             grains[i].vy /= -2;
-        } else if(newy < 0) {
-            newy         = 0;
+        } else if(newy < over) {
+            newy = over;
             grains[i].vy /= -2;
         }
+        //Remove overshoot buffer
+        newx -= over;
+        newy -= over;
 
-        oldidx = (grains[i].y/256) * renderer.getGridWidth() + (grains[i].x/256); // Prior pixel #
-        newidx = (newy      /256) * renderer.getGridWidth() + (newx      /256); // New pixel #
+        oldidx = (grains[i].y/spaceMultiplier) * renderer.getGridWidth() + (grains[i].x/spaceMultiplier); // Prior pixel #
+        newidx = (newy      /spaceMultiplier) * renderer.getGridWidth() + (newx      /spaceMultiplier); // New pixel #
 if (i<0) {
     char msg[100];
     sprintf(msg, "Grain %d: OldIdx %d  NewIDx %d)\n", i, oldidx, newidx );
@@ -155,12 +174,12 @@ if (i<0) {
                 // (both-axis) motion is occurring, moving on either axis alone WILL
                 // change the pixel index, no need to check that again.
                 if((abs(grains[i].vx) - abs(grains[i].vy)) >= 0) { // X axis is faster
-                    newidx = (grains[i].y / 256) * renderer.getGridWidth() + (newx / 256);
+                    newidx = (grains[i].y / spaceMultiplier) * renderer.getGridWidth() + (newx / spaceMultiplier);
                     if(!renderer.getPixelValue(newidx)) { // That pixel's free!  Take it!  But...
                         newy         = grains[i].y; // Cancel Y motion
                         grains[i].vy /= -2;         // and bounce Y velocity
                     } else { // X pixel is taken, so try Y...
-                        newidx = (newy / 256) * renderer.getGridWidth() + (grains[i].x / 256);
+                        newidx = (newy / spaceMultiplier) * renderer.getGridWidth() + (grains[i].x / spaceMultiplier);
                         if(!renderer.getPixelValue(newidx)) { // Pixel is free, take it, but first...
                         newx         = grains[i].x; // Cancel X motion
                         grains[i].vx /= -2;         // and bounce X velocity
@@ -173,12 +192,12 @@ if (i<0) {
                         }
                     }
                 } else { // Y axis is faster, start there
-                    newidx = (newy / 256) * renderer.getGridWidth() + (grains[i].x / 256);
+                    newidx = (newy / spaceMultiplier) * renderer.getGridWidth() + (grains[i].x / spaceMultiplier);
                     if(!renderer.getPixelValue(newidx)) { // Pixel's free!  Take it!  But...
                         newx         = grains[i].x; // Cancel X motion
                         grains[i].vy /= -2;         // and bounce X velocity
                     } else { // Y pixel is taken, so try X...
-                        newidx = (grains[i].y / 256) * renderer.getGridWidth() + (newx / 256);
+                        newidx = (grains[i].y / spaceMultiplier) * renderer.getGridWidth() + (newx / spaceMultiplier);
                         if(!renderer.getPixelValue(newidx)) { // Pixel is free, take it, but first...
                             newy         = grains[i].y; // Cancel Y motion
                             grains[i].vy /= -2;         // and bounce Y velocity
@@ -198,8 +217,8 @@ if (i<0) {
             uint8_t colcode = renderer.getPixelValue(oldidx);
             renderer.setPixelValue(oldidx, 0);       // Clear old spot
             renderer.setPixelValue(newidx, colcode); // Set new spot
-            renderer.setPixelInstant(grains[i].x/256,grains[i].y/256, renderer.getColour(0) );       //Update on screen
-            renderer.setPixelInstant(newx/256, newy/256, renderer.getColour(colcode) ); //Update on screen
+            renderer.setPixelInstant(grains[i].x/spaceMultiplier,grains[i].y/spaceMultiplier, renderer.getColour(0) );       //Update on screen
+            renderer.setPixelInstant(newx/spaceMultiplier, newy/spaceMultiplier, renderer.getColour(colcode) ); //Update on screen
         }
         grains[i].x  = newx; // Update grain position
         grains[i].y  = newy;
@@ -217,15 +236,20 @@ void FallingSand::setAcceleration(int16_t x, int16_t y)
     accelY = y;
     
     //Limit maximum velocity based on strength of gravity
-    uint16_t maxVel = sqrt( (int32_t)x*x+(int32_t)y*y ) * 8;
-    const int16_t minVelCap = 64;
-    if (maxVel > minVelCap)
+    uint16_t maxVel = sqrt( (int32_t)x*x+(int32_t)y*y ) * spaceMultiplier / 32;
+    uint16_t minVelCap = spaceMultiplier / 4;
+    if (maxVel > minVelCap) {
+        //Set max to 8 x magnitude of acceleration vector (set at pixel scale, so compensate for space mulipler)
         velCap = maxVel;
-    else
+    }
+    else {
+        //Set to minimum
         velCap = minVelCap;
+    }
+        
 /*
     char msg[255];
-    sprintf(msg,"Acceleration set: %d,%d Max: %f\n", accelX, accelY, velCap );
+    sprintf(msg,"Acceleration set: %d,%d Vel min: %d, max: %d, cap: %d\n", accelX, accelY, minVelCap, maxVel, velCap );
     renderer.outputMessage(msg);
 */
 }
@@ -279,11 +303,11 @@ void FallingSand::addGrain(uint16_t x, uint16_t y, RGB_colour colour)
         renderer.outputMessage(msg);
     }
 
-    grains[i].x = (x * 256)+renderer.random_int16(0,255); // Assign position in centre of
-    grains[i].y = (y * 256)+renderer.random_int16(0,255); // the 'grain' coordinate space
+    grains[i].x = (x * spaceMultiplier)+renderer.random_int16(0,spaceMultiplier); // Assign position in centre of
+    grains[i].y = (y * spaceMultiplier)+renderer.random_int16(0,spaceMultiplier); // the 'grain' coordinate space
     numGrains++;
     grains[i].vx = grains[i].vy = 0; // Initial velocity is zero
-    renderer.setPixelValue( (grains[i].y / 256) * renderer.getGridWidth() + (grains[i].x / 256), renderer.getColourId(colour) ); // Mark it
+    renderer.setPixelValue( (grains[i].y / spaceMultiplier) * renderer.getGridWidth() + (grains[i].x / spaceMultiplier), renderer.getColourId(colour) ); // Mark it
 /*
 char msg[100];
 sprintf(msg, "Grain placed %d,%d (%d,%d) colour:%d; Total:%d\n", x,y, int(grains[i].x), int(grains[i].y), renderer.getColourId(colour), numGrains );

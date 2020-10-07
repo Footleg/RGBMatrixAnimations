@@ -51,10 +51,11 @@ class FallingSand
         RGBMatrixRenderer &renderer;
 
         struct Grain {
-            int16_t  x,  y; // Position
+            uint16_t  x,  y; // Position
             int16_t vx, vy; // Velocity
         };
         Grain* grains;
+        uint16_t spaceMultiplier;
         uint16_t maxGrains;
         uint16_t numGrains;
         uint16_t maxX;
@@ -63,10 +64,10 @@ class FallingSand
         int16_t accelY;
         int16_t accelAbs;
         uint16_t shake;
-        float velCap;
+        uint16_t velCap;
     //functions
     public:
-        FallingSand(RGBMatrixRenderer&,int16_t);
+        FallingSand(RGBMatrixRenderer&,uint16_t);
         ~FallingSand();
         void runCycle();
         void setAcceleration(int16_t,int16_t);
