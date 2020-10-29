@@ -58,8 +58,8 @@ class GameOfLife
         uint8_t fadeSteps;
         RGBMatrixRenderer &renderer;
         uint8_t** cells; //8bits representing [null,null,deaths,births,prev3,prev2,prev1,alive]
-        uint8_t alive = 0;
-        uint8_t population[popHistorySize] = {};
+        uint16_t alive = 0;
+        uint16_t population[popHistorySize] = {};
         uint8_t popCursor = popHistorySize - 1; //Set to last position as gets incremented before use
         uint8_t unchangedCount = 0;
         uint8_t repeat2Count = 0;

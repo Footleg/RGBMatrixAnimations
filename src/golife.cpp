@@ -101,7 +101,7 @@ void GameOfLife::runCycle()
         }
         //Debug end condition detected
         char msgEnd[80];
-        if (alive == 0)
+        if (alive == 0) 
             sprintf(msgEnd, "All died\n");
         else if (unchangedCount > 5 )
             sprintf(msgEnd, "Static pattern for 5 frames\n");
@@ -600,7 +600,12 @@ void GameOfLife::applyChanges()
 
     if (gapCheck == true) ++unchangedPopulation[gap-1];
     else unchangedPopulation[gap-1] = 0;
-  
+
+/*
+    char msg[16];
+    sprintf(msg, "Pop: %d ", alive);
+    renderer.outputMessage(msg);
+*/
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
