@@ -68,7 +68,7 @@ class Animation : public ThreadedCanvasManipulator, public RGBMatrixRenderer {
         virtual ~Animation(){}
 
         void Run() {
-            uint8_t MAX_FPS=1000/delay_ms_;    // Maximum redraw rate, frames/second
+            uint16_t MAX_FPS=1000/delay_ms_;    // Maximum redraw rate, frames/second
             counter = 0;
             uint64_t prevTime = micros();
             uint64_t prevTime2 = micros();
@@ -86,9 +86,17 @@ class Animation : public ThreadedCanvasManipulator, public RGBMatrixRenderer {
                         break;
                     default:
                         animSand.runCycle();
-                        if (micros() - prevTime2 > 1200000) {
+                        
+                        if (micros() - prevTime2 > 4000000) {
                             prevTime2 = micros();
-                            animSand.setAcceleration( random_int16(-accel,accel), random_int16(-accel,accel) );  
+                            fprintf(stderr,"Change acceleration %d\n", accel);
+                            if(accel != 0.0) {
+                                animSand.setAcceleration( random_int16(-accel,accel), random_int16(-accel,accel) );  
+                            }
+                            else {
+                                fprintf(stderr,"Change acceleration zero,zero\n");
+                                animSand.setAcceleration(0,0);
+                            }
                         }
                         break;
                 }
@@ -118,13 +126,13 @@ class Animation : public ThreadedCanvasManipulator, public RGBMatrixRenderer {
                 // calculations are non-deterministic (don't always take the same amount
                 // of time, depending on their current states), this helps ensure that
                 // things like gravity appear constant in the simulation.
-                uint32_t t;
+                uint64_t t;
                 while((t = micros() - prevTime) < (100000L / MAX_FPS));
-                //fprintf(stderr,"Cycle time: %d\n", t );
+                //fprintf(stderr,"Cycle time: %llu\n", t );
                 prevTime = micros();
 
-                //Reset cycles before acceleration is changed based on speed of update
-                cycles = 8000000 / t;
+                //Reset cycles before mode is changed based on speed of update
+                cycles = 400000 * getGridWidth() / t;
                 if (accel < 5) cycles = 2*cycles;
             }
         }
@@ -183,7 +191,7 @@ static int usage(const char *progname) {
 int main(int argc, char *argv[]) {
     int runtime_seconds = -1;
     int scroll_ms = 10;
-    int accel = 0;
+    int accel = 10;
     int shake = 0;
     int numGrains = 4;
 
