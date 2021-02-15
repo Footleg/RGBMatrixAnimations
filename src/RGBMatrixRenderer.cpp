@@ -32,12 +32,12 @@ RGBMatrixRenderer::RGBMatrixRenderer(uint16_t width, uint16_t height, uint8_t ma
     : gridWidth(width), gridHeight(height), maxBrightness(maxBrightness)
 {
     // Allocate memory for colour palette array
-    palette = new RGB_colour[256];
+    palette = new RGB_colour[maxColours];
     palette[0] = RGB_colour{0,0,0};
     coloursDefined = 0;
     
     // Allocate memory for pixels array
-    img = new uint8_t[width * height];
+    img = new uint16_t[width * height];
 
     clearImage();
 
@@ -68,8 +68,8 @@ uint8_t RGBMatrixRenderer::getMaxBrightness()
 RGB_colour RGBMatrixRenderer::getRandomColour()
 {
     //Fetches a random colour from the palette if palette is full, otherwise returns a new one
-    if (coloursDefined == 255) {
-        return getColour(random_int16(0,255));
+    if (coloursDefined >= maxColours) {
+        return getColour(random_int16(0,maxColours));
     }
     else {
         return newRandomColour();
@@ -155,7 +155,7 @@ RGB_colour RGBMatrixRenderer::blendColour(RGB_colour start, RGB_colour end, uint
 
 }
 
-RGB_colour RGBMatrixRenderer::getColour(uint8_t id)
+RGB_colour RGBMatrixRenderer::getColour(uint16_t id)
 {
     RGB_colour colour = {0,0,0};
 
@@ -166,10 +166,10 @@ RGB_colour RGBMatrixRenderer::getColour(uint8_t id)
     return colour;
 }
 
-uint8_t RGBMatrixRenderer::getColourId(RGB_colour colour)
+uint16_t RGBMatrixRenderer::getColourId(RGB_colour colour)
 {
    //Search palette for matching colour (black is always zero)
-    uint8_t id = 0;
+    uint16_t id = 0;
     if ( (colour.r !=0) || (colour.g !=0) || (colour.b !=0) ) {
         for (uint16_t i=1; i<=coloursDefined; i++) {
 /*
@@ -187,13 +187,13 @@ outputMessage(msg);
         
         //If match not found, add to palette if room
         if (id == 0) {
-            if (coloursDefined < 255) {
+            if (coloursDefined < maxColours-1) {
                 coloursDefined++;
-/*                
+/**/                
 char msg[64];
 sprintf(msg, "Adding colour: %d, %d, %d (Total: %d)\n", colour.r,  colour.g, colour.b, coloursDefined);
 outputMessage(msg);
-*/
+
                 palette[coloursDefined] = colour;
             }
             id = coloursDefined; //For now set to last colour even if we couldn't add another one
@@ -217,7 +217,7 @@ void RGBMatrixRenderer::updateDisplay()
 //    uint16_t pixels = 0;
     for(int y=0; y<gridHeight; y++) {
         for(int x=0; x<gridWidth; x++) {
-            uint8_t colcode = img[y*gridWidth + x];
+            uint16_t colcode = img[y*gridWidth + x];
             if (colcode) {
                 setPixel(x,y,getColour(colcode));
 //                pixels++;
@@ -245,17 +245,17 @@ void RGBMatrixRenderer::clearImage()
     coloursDefined = 0;
 }
 
-uint8_t RGBMatrixRenderer::getPixelValue(uint16_t index)
+uint16_t RGBMatrixRenderer::getPixelValue(uint16_t index)
 {
     return img[index];
 }
 
-uint8_t RGBMatrixRenderer::getPixelValue(uint16_t x, uint16_t y)
+uint16_t RGBMatrixRenderer::getPixelValue(uint16_t x, uint16_t y)
 {
     return img[y*gridWidth + x];
 }
 
-void RGBMatrixRenderer::setPixelValue(uint16_t index, uint8_t value)
+void RGBMatrixRenderer::setPixelValue(uint16_t index, uint16_t value)
 {
     img[index] = value;
 }

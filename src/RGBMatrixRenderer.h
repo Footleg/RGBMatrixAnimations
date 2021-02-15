@@ -36,6 +36,13 @@
 #include <stdio.h>
 #endif
 
+//Maximum colours supported in palette (including black at index zero)
+/* The larger the palette size, the more colours can be displayed, but palette 
+ * lookup time will increase the more colours added to the palette (affecting 
+ * speed of all pixel updates).
+ */
+static uint16_t maxColours = 16400; //Values much over 16400 hang the Teensy3.2 I am testing on. 
+
 struct RGB_colour {
     uint8_t r;
     uint8_t g;
@@ -51,9 +58,9 @@ class RGBMatrixRenderer
         uint16_t gridHeight;
     private:
         uint8_t maxBrightness;
-        uint8_t* img; // Internal 'map' of pixels
+        uint16_t* img; // Internal 'map' of pixels
         RGB_colour* palette;
-        uint8_t coloursDefined;
+        uint16_t coloursDefined;
         virtual void setPixel(uint16_t, uint16_t, RGB_colour) = 0;
         
     //functions
@@ -63,9 +70,9 @@ class RGBMatrixRenderer
         uint16_t getGridWidth();
         uint16_t getGridHeight();
         uint8_t getMaxBrightness();
-        uint8_t getPixelValue(uint16_t);
-        uint8_t getPixelValue(uint16_t,uint16_t);
-        void setPixelValue(uint16_t,uint8_t);
+        uint16_t getPixelValue(uint16_t);
+        uint16_t getPixelValue(uint16_t,uint16_t);
+        void setPixelValue(uint16_t,uint16_t);
         void setPixelColour(uint16_t, uint16_t, RGB_colour);
         void setPixelInstant(uint16_t, uint16_t, RGB_colour);
         void updateDisplay();
@@ -79,8 +86,8 @@ class RGBMatrixRenderer
         uint16_t newPositionX(uint16_t,uint16_t,bool=true);
         uint16_t newPositionY(uint16_t,uint16_t,bool=true);
         RGB_colour blendColour(RGB_colour,RGB_colour,uint8_t,uint8_t);
-        uint8_t getColourId(RGB_colour);
-        RGB_colour getColour(uint8_t);
+        uint16_t getColourId(RGB_colour);
+        RGB_colour getColour(uint16_t);
     protected:
     private:
         uint16_t newPosition(uint16_t,uint16_t,uint16_t,bool);
