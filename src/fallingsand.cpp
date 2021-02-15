@@ -234,6 +234,8 @@ if (i<0) {
 
 void FallingSand::setAcceleration(int16_t x, int16_t y)
 {
+    //Acceleration direction matches axes sign. 
+    //e.g. +ve accelX will cause sand grains to move to greater X positions.
     accelX = x;
     accelY = y;
     
