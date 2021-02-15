@@ -36,13 +36,6 @@
 #include <stdio.h>
 #endif
 
-//Maximum colours supported in palette (including black at index zero)
-/* The larger the palette size, the more colours can be displayed, but palette 
- * lookup time will increase the more colours added to the palette (affecting 
- * speed of all pixel updates).
- */
-static uint16_t maxColours = 16400; //Values much over 16400 hang the Teensy3.2 I am testing on. 
-
 struct RGB_colour {
     uint8_t r;
     uint8_t g;
@@ -57,6 +50,13 @@ class RGBMatrixRenderer
         uint16_t gridWidth;
         uint16_t gridHeight;
     private:
+        //Maximum colours supported in palette (including black at index zero)
+        /* The larger the palette size, the more colours can be displayed, but palette 
+        * lookup time will increase the more colours added to the palette (affecting 
+        * speed of all pixel updates).
+        */
+        const uint16_t maxColours = 16400; //Values much over 16400 hang the Teensy3.2 I am testing on. 
+
         uint8_t maxBrightness;
         uint16_t* img; // Internal 'map' of pixels
         RGB_colour* palette;
