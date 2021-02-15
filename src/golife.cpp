@@ -63,7 +63,7 @@ GameOfLife::~GameOfLife()
 
 void GameOfLife::runCycle()
 {
-    int8_t x, y, xt, yt, xi, yi, neighbours;
+    int16_t x, y, xt, yt, xi, yi, neighbours;
     uint8_t maxRepeatsCount, maxContributor;
 
     //Get highest repeating frame count for repeating patterns > 5 frames
