@@ -104,10 +104,11 @@ RGB_colour RGBMatrixRenderer::newRandomColour()
     
     //This method for string concatenation was used as it compiles on both g++ on Linux
     //and arduino platforms
+/*
     char msg[32];
     sprintf(msg, "New RGB colour  %d, %d, %d\n", colour.r,  colour.g, colour.b);
     outputMessage(msg);
-
+*/
     return colour;
 }
 
@@ -168,20 +169,33 @@ RGB_colour RGBMatrixRenderer::getColour(uint16_t id)
 
 uint16_t RGBMatrixRenderer::getColourId(RGB_colour colour)
 {
-   //Search palette for matching colour (black is always zero)
     uint16_t id = 0;
+    uint16_t lowestScore = 100;
+    uint16_t closestMatch = 0;
+
+    //Search palette for matching colour (black is always zero)
     if ( (colour.r !=0) || (colour.g !=0) || (colour.b !=0) ) {
         for (uint16_t i=1; i<=coloursDefined; i++) {
 /*
-char msg[64];
-sprintf(msg, "Searching palette %d (size %d))\n", i, coloursDefined);
-outputMessage(msg);
+char msg1[64];
+sprintf(msg1, "Searching palette %d (size %d))\n", i, coloursDefined);
+outputMessage(msg1);
 */
             if ( (palette[i].r == colour.r)
             && (palette[i].g == colour.g) 
             && (palette[i].b == colour.b) ) {
                 id = i;
+                lowestScore = 0;
+                closestMatch = id;
                 break;
+            }
+            else {
+                //Determine if closest match so far
+                uint16_t score = abs(palette[i].r - colour.r) + abs(palette[i].g - colour.g) + abs(palette[i].b - colour.b);
+                if (score < lowestScore) {
+                    lowestScore = score;
+                    closestMatch = i;
+                }
             }
         }
         
@@ -189,14 +203,21 @@ outputMessage(msg);
         if (id == 0) {
             if (coloursDefined < maxColours-1) {
                 coloursDefined++;
-/**/                
-char msg[64];
-sprintf(msg, "Adding colour: %d, %d, %d (Total: %d)\n", colour.r,  colour.g, colour.b, coloursDefined);
-outputMessage(msg);
-
+/*                
+char msg2[64];
+sprintf(msg2, "Adding colour: %d, %d, %d (Total: %d)\n", colour.r,  colour.g, colour.b, coloursDefined);
+outputMessage(msg2);
+*/
                 palette[coloursDefined] = colour;
+                 id = coloursDefined;
             }
-            id = coloursDefined; //For now set to last colour even if we couldn't add another one
+            else {
+                //Set to closest matching colour
+                id = closestMatch;
+char msg3[64];
+sprintf(msg3, "Asked for (%d,%d,%d) but got (%d,%d,%d)\n", colour.r,  colour.g, colour.b, palette[id].r, palette[id].g, palette[id].b);
+outputMessage(msg3);
+            }
         }
     }
     /*
