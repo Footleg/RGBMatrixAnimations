@@ -67,7 +67,8 @@ FallingSand::FallingSand(RGBMatrixRenderer &renderer_, uint16_t shake_)
     velCap = spaceMultiplier;
     numGrains = 0;
     shake = shake_;
-
+    accelX = 0;
+    accelY = 0;
 } //FallingSand
 
 // default destructor
@@ -80,8 +81,8 @@ FallingSand::~FallingSand()
 void FallingSand::runCycle()
 {
     // Read accelerometer...
-    int16_t ax = -accelX,      // Transform accelerometer axes
-            ay =  accelY,      // to grain coordinate space
+    int16_t ax = accelX,      // Transform accelerometer axes
+            ay = accelY,      // to grain coordinate space
             az = shake;        // Random motion factor
 
     //az = (az >= 300) ? 1 : 400 - az;      // Clip & invert
@@ -212,6 +213,7 @@ if (i<0) {
                 }
             }
         }
+        
 		//Update matrix memory and display state (before changing grain position as we need old position
         if (oldidx != newidx) {
             uint8_t colcode = renderer.getPixelValue(oldidx);
@@ -247,11 +249,11 @@ void FallingSand::setAcceleration(int16_t x, int16_t y)
         velCap = minVelCap;
     }
         
-/*
+
     char msg[255];
     sprintf(msg,"Acceleration set: %d,%d Vel min: %d, max: %d, cap: %d\n", accelX, accelY, minVelCap, maxVel, velCap );
     renderer.outputMessage(msg);
-*/
+
 }
 
 void FallingSand::addGrain(RGB_colour colour)
