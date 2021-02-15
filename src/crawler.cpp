@@ -47,6 +47,12 @@ Crawler::~Crawler()
 //Run Cycle is called once per frame of the animation
 void Crawler::runCycle()
 {
+    //Example of how to output messages to console, compatible with Arduino and C++ on Linux
+/*
+    char msg[44];
+    sprintf(msg, "%s %d %s %d %s %d %s", "Drawing colour: ", colour.r, ",",  colour.g,  ",",  colour.b, "\n" );
+    renderer.outputMessage(msg);
+*/    
     //Set current position pixel
     renderer.setPixelColour(x, y, colour);
 
