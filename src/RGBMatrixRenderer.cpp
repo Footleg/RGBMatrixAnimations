@@ -189,8 +189,8 @@ outputMessage(msg1);
                 closestMatch = id;
                 break;
             }
-            else {
-                //Determine if closest match so far
+            else if (coloursDefined >= maxColours-1) {
+                //Determine if closest match so far (only needed if palette is already full)
                 uint16_t score = abs(palette[i].r - colour.r) + abs(palette[i].g - colour.g) + abs(palette[i].b - colour.b);
                 if (score < lowestScore) {
                     lowestScore = score;
@@ -209,7 +209,7 @@ sprintf(msg2, "Adding colour: %d, %d, %d (Total: %d)\n", colour.r,  colour.g, co
 outputMessage(msg2);
 */
                 palette[coloursDefined] = colour;
-                 id = coloursDefined;
+                id = coloursDefined;
             }
             else {
                 //Set to closest matching colour
@@ -220,7 +220,7 @@ outputMessage(msg3);
             }
         }
     }
-    /*
+/*
 if (id > 0) {
 char msg[64];
 sprintf(msg, "Returned colour at index: %d\n", id);
@@ -285,10 +285,11 @@ void RGBMatrixRenderer::setPixelValue(uint16_t index, uint16_t value)
 void RGBMatrixRenderer::setPixelColour(uint16_t x, uint16_t y, RGB_colour colour)
 {
     img[y * gridWidth + x] = getColourId(colour);
-/*    char msg[80];
+/*
+    char msg[80];
     sprintf(msg, "Set img pixel: %d Colour: %d,%d,%d\n", y * gridWidth + x, colour.r, colour.g, colour.b );
     outputMessage(msg);
- */
+*/ 
 }
 
 // Sets pixel colour directly on display. Faster and non-persistent as in memory display

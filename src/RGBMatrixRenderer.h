@@ -34,6 +34,7 @@
 #else
 #include <stdint.h>
 #include <stdio.h>
+#include <cmath>
 #endif
 
 struct RGB_colour {
