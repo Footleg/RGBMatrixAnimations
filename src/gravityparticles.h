@@ -41,7 +41,7 @@
 #include "RGBMatrixRenderer.h"
 
 
-class FallingSand
+class GravityParticles
 {
     //variables
     public:
@@ -50,14 +50,14 @@ class FallingSand
         int delayms;
         RGBMatrixRenderer &renderer;
 
-        struct Grain {
+        struct Particle {
             uint16_t  x,  y; // Position
             int16_t vx, vy; // Velocity
         };
-        Grain* grains;
+        Particle* particles;
         uint16_t spaceMultiplier;
-        uint16_t maxGrains;
-        uint16_t numGrains;
+        uint16_t maxParticles;
+        uint16_t numParticles;
         uint16_t maxX;
         uint16_t maxY;
         int16_t accelX;
@@ -65,18 +65,19 @@ class FallingSand
         int16_t accelAbs;
         uint16_t shake;
         uint16_t velCap;
+        float_t loss;
     //functions
     public:
-        FallingSand(RGBMatrixRenderer&,uint16_t);
-        ~FallingSand();
+        GravityParticles(RGBMatrixRenderer&,uint16_t,uint8_t=10);
+        ~GravityParticles();
         void runCycle();
         void setAcceleration(int16_t,int16_t);
         void setAcceleration(int16_t,int16_t,int16_t);
-        void addGrain(RGB_colour,int16_t=0,int16_t=0);
-        void addGrain(uint16_t,uint16_t,RGB_colour,int16_t=0,int16_t=0);
-        void clearGrains();
-        uint16_t getGrainCount();
-        void imgToGrains();
+        void addParticle(RGB_colour,int16_t=0,int16_t=0);
+        void addParticle(uint16_t,uint16_t,RGB_colour,int16_t=0,int16_t=0);
+        void clearParticles();
+        uint16_t getParticleCount();
+        void imgToParticles();
     protected:
     private:
-}; //FallingSand
+}; //GravityParticles
