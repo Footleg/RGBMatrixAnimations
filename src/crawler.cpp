@@ -106,7 +106,7 @@ void Crawler::runCycle()
             cursor.vy = 0;
             cursor = renderer.updatePosition(cursor);
             renderer.setPixelColour(cursor.x, cursor.y, RGB_colour{0, 0, 0} );
-    } 
+        } 
         else if (leadPixel.vy == -renderer.SUBPIXEL_RES)
         {
             //Down

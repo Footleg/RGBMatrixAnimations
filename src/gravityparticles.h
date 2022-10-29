@@ -1,12 +1,20 @@
 /**************************************************************************************************
- * Falling Sand simulation
+ * Particles simulation
  * 
  * This implementation was written as a reusable animator class where the RGB matrix hardware
  * rendering class is passed in, so it can be used with any RGB array display by writing an 
- * implementation of a renderer class to set pixels/LED colours on the hardware.
+ * implementation of a renderer class to set pixels/LED colours on your specific hardware.
  *
  * Based on original code by https://github.com/PaintYourDragon published as the LED sand example 
  * in the Adafruit Learning Guides here https://github.com/adafruit/Adafruit_Learning_System_Guides
+ * 
+ * The original 'sand particles' idea has been extended to simulate other particle behaviours
+ * including 'sparks' which are much lighter and can fracture into multiple new particles as they
+ * decay in speed and brightness. 
+ * 
+ * Added LED cube support. Acceleration is now supported in 3D coordinates, and applies differently 
+ * to particles depending on which matrix panel they are on (each cube face has gravity acting in a 
+ * different direction with respect to the X and Y directions on that panel).
  * 
  * Copyright (C) 2022 Paul Fretwell - aka 'Footleg'
  * 
