@@ -8,7 +8,7 @@
  * Based on original code by https://github.com/PaintYourDragon published as the LED sand example 
  * in the Adafruit Learning Guides here https://github.com/adafruit/Adafruit_Learning_System_Guides
  * 
- * Copyright (C) 2020 Paul Fretwell - aka 'Footleg'
+ * Copyright (C) 2022 Paul Fretwell - aka 'Footleg'
  * 
  * This is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -71,8 +71,9 @@ class FallingSand
         ~FallingSand();
         void runCycle();
         void setAcceleration(int16_t,int16_t);
-        void addGrain(RGB_colour);
-        void addGrain(uint16_t,uint16_t,RGB_colour);
+        void setAcceleration(int16_t,int16_t,int16_t);
+        void addGrain(RGB_colour,int16_t=0,int16_t=0);
+        void addGrain(uint16_t,uint16_t,RGB_colour,int16_t=0,int16_t=0);
         void clearGrains();
         uint16_t getGrainCount();
         void imgToGrains();

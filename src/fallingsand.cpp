@@ -8,7 +8,11 @@
  * Based on original code by https://github.com/PaintYourDragon published as the LED sand example 
  * in the Adafruit Learning Guides here https://github.com/adafruit/Adafruit_Learning_System_Guides
  * 
- * Copyright (C) 2020 Paul Fretwell - aka 'Footleg'
+ * Added LED cube support. Acceleration is now supported in 3D coordinates, and applies differently 
+ * to grains depending on which matrix panel they are on (each cube face has gravity acting in a 
+ * different direction with respect to the X and Y directions on that panel).
+ * 
+ * Copyright (C) 2022 Paul Fretwell - aka 'Footleg'
  * 
  * This is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,6 +35,8 @@
 FallingSand::FallingSand(RGBMatrixRenderer &renderer_, uint16_t shake_)
     : renderer(renderer_)
 {
+    //Normally the grain coordinate space is 256x the pixel resolution of the pixel matrix
+    //But for large displays this needs limiting to prevent the space overflowing a 16bit uint
     int maxDim = renderer.getGridWidth();
     if (renderer.getGridHeight() > maxDim) {
         maxDim = renderer.getGridHeight();
@@ -80,22 +86,16 @@ FallingSand::~FallingSand()
 //Run Cycle is called once per frame of the animation
 void FallingSand::runCycle()
 {
-    // Read accelerometer...
-    int16_t ax = accelX,      // Transform accelerometer axes
-            ay = accelY,      // to grain coordinate space
-            az = shake;        // Random motion factor
-
-    //az = (az >= 300) ? 1 : 400 - az;      // Clip & invert
-    ax -= az;                         // Subtract motion factor from X, Y
-    ay -= az;
-    int16_t az2 = az * 2 + 1;         // Range of random motion to add back in
-
-    // ...and apply 2D accel vector to grain velocities...
     int32_t v2; // Velocity squared
     float   v;  // Absolute velocity
+    int16_t shakeFactor = shake / 2;
+
+    //Apply 2D accel vector to grain velocities...
     for(int16_t i=0; i<numGrains; i++) {
-        grains[i].vx += ax + renderer.random_int16(0,az2); // A little randomness makes
-        grains[i].vy += ay + renderer.random_int16(0,az2); // tall stacks topple better!
+        int16_t axa = accelX + renderer.random_int16(-shakeFactor,shakeFactor+1); // A little randomness makes
+        int16_t aya = accelY + renderer.random_int16(-shakeFactor,shakeFactor+1); // tall stacks topple better!
+        grains[i].vx += axa;
+        grains[i].vy += aya;
         // Terminal velocity (in any direction) is 256 units -- equal to
         // 1 pixel -- which keeps moving grains from passing through each other
         // and other such mayhem.  Though it takes some extra math, velocity is
@@ -108,11 +108,11 @@ void FallingSand::runCycle()
             grains[i].vx = (int16_t)(velCap*(float)grains[i].vx/v); // Maintain heading
             grains[i].vy = (int16_t)(velCap*(float)grains[i].vy/v); // Limit magnitude
         }
-if (i<0) {
-    char msg[80];
-    sprintf(msg, "Grain %d Vel: %d,%d; a=%d,%d,%d az2=%d\n", i, int(grains[i].vx), int(grains[i].vy), ax, ay, az, az2 );
-    renderer.outputMessage(msg);
-}
+    //REMEMBER these debug messages kill the speed of the animation if more than around 10 grains!
+    // char msg[80];
+    // sprintf(msg, "Grain %d Vel: %d,%d; a=%d,%d\n", i, int(grains[i].vx), int(grains[i].vy), axa, aya );
+    // renderer.outputMessage(msg);
+
     }
         
     // ...then update position of each grain, one at a time, checking for
@@ -152,11 +152,12 @@ if (i<0) {
 
         oldidx = (grains[i].y/spaceMultiplier) * renderer.getGridWidth() + (grains[i].x/spaceMultiplier); // Prior pixel #
         newidx = (newy      /spaceMultiplier) * renderer.getGridWidth() + (newx      /spaceMultiplier); // New pixel #
-if (i<0) {
-    char msg[100];
-    sprintf(msg, "Grain %d: OldIdx %d  NewIDx %d)\n", i, oldidx, newidx );
-    renderer.outputMessage(msg);
-}
+
+    //REMEMBER these debug messages kill the speed of the animation if more than around 10 grains!
+    // char msg[100];
+    // sprintf(msg, "Grain %d: OldIdx %d  NewIDx %d)\n", i, oldidx, newidx );
+    // renderer.outputMessage(msg);
+
         if((oldidx != newidx) // If grain is moving to a new pixel...
             && renderer.getPixelValue(newidx) ) 
         {       // but if that pixel is already occupied...
@@ -229,9 +230,10 @@ if (i<0) {
     }
 
     //Update LEDs
-    renderer.showPixels(); //Update the display (for hardware which is not instantaneous
+    renderer.showPixels(); //Update the display (for hardware which is not instantaneous)
 }
 
+// Acceleration setter for simple 2D panel arrangements (for backwards compatibility with existing code)
 void FallingSand::setAcceleration(int16_t x, int16_t y)
 {
     //Acceleration direction matches axes sign. 
@@ -250,6 +252,36 @@ void FallingSand::setAcceleration(int16_t x, int16_t y)
         //Set to minimum
         velCap = minVelCap;
     }
+    velCap = spaceMultiplier * 4; //Make this possible to set via a method. Needs to be * 4 for sand, but * 16 for fast particles.
+    //Also need to change the scale of gravity, so fast particles crash to floor even with 1. Need fractions of this force to cause 
+    //them to drift down or maybe even allow them to be 'light' particles which are less affected?
+
+    char msg[255];
+    sprintf(msg,"Acceleration set: %d,%d Vel min: %d, max: %d, cap: %d, shake=%d\n", accelX, accelY, minVelCap, maxVel, velCap, shake );
+    renderer.outputMessage(msg);
+}
+
+// Acceleration setter for 3D panel arrangements (LED Cubes), sets an array of acceleration x,y components per panel
+void FallingSand::setAcceleration(int16_t x, int16_t y, int16_t z)
+{
+    //Acceleration direction matches axes sign. 
+    //e.g. +ve accelX will cause sand grains to move to greater X positions.
+    //Set per panel for 6 cube faces
+    accelX = x;
+    accelY = y;
+    
+    //Limit maximum velocity based on strength of gravity
+    uint16_t xyAbs = sqrt( (int32_t)x*x+(int32_t)y*y );
+    uint16_t maxVel = sqrt( (int32_t)xyAbs*xyAbs+(int32_t)z*z ) * spaceMultiplier / 32;
+    uint16_t minVelCap = spaceMultiplier / 4;
+    if (maxVel > minVelCap) {
+        //Set max to 8 x magnitude of acceleration vector (set at pixel scale, so compensate for space mulipler)
+        velCap = maxVel;
+    }
+    else {
+        //Set to minimum
+        velCap = minVelCap;
+    }
         
 
     char msg[255];
@@ -258,7 +290,7 @@ void FallingSand::setAcceleration(int16_t x, int16_t y)
 
 }
 
-void FallingSand::addGrain(RGB_colour colour)
+void FallingSand::addGrain(RGB_colour colour, int16_t vx, int16_t vy)
 {
     //Place grain in random free position.
     //id indicates grain colour (currently based on 6 values each per r,g,b channel
@@ -270,14 +302,14 @@ void FallingSand::addGrain(RGB_colour colour)
         y = renderer.random_int16(0,renderer.getGridHeight() ); // the 'grain' coordinate space
         attempts++;
         // Check if corresponding pixel position is already occupied...
-/*        char msg[50];
-        sprintf(msg, "Random place attempt %d\n", attempts);
-        renderer.outputMessage(msg);*/
+        // char msg[50];
+        // sprintf(msg, "Random place attempt %d\n", attempts);
+        // renderer.outputMessage(msg);
     } while ( (renderer.getPixelValue(y * renderer.getGridWidth() + x)) && (attempts < 2001) ); // Keep retrying until a clear spot is found
     
     //Add grain if free position was found
     if ( (renderer.getPixelValue(y * renderer.getGridWidth() + x)) == false ) {
-        addGrain(x,y,colour);
+        addGrain(x,y,colour,vx,vy);
     }
     else {
         char msg[50];
@@ -287,7 +319,7 @@ void FallingSand::addGrain(RGB_colour colour)
 
 }
 
-void FallingSand::addGrain(uint16_t x, uint16_t y, RGB_colour colour)
+void FallingSand::addGrain(uint16_t x, uint16_t y, RGB_colour colour, int16_t vx, int16_t vy)
 {
     //Place grain into array at specified position.
     uint16_t i = numGrains;
@@ -310,13 +342,15 @@ void FallingSand::addGrain(uint16_t x, uint16_t y, RGB_colour colour)
     grains[i].x = (x * spaceMultiplier)+renderer.random_int16(0,spaceMultiplier); // Assign position in centre of
     grains[i].y = (y * spaceMultiplier)+renderer.random_int16(0,spaceMultiplier); // the 'grain' coordinate space
     numGrains++;
-    grains[i].vx = grains[i].vy = 0; // Initial velocity is zero
+    //Set initial velocity
+    grains[i].vx = vx;
+    grains[i].vy = vy; 
     renderer.setPixelValue( (grains[i].y / spaceMultiplier) * renderer.getGridWidth() + (grains[i].x / spaceMultiplier), renderer.getColourId(colour) ); // Mark it
-/*
+
 char msg[100];
-sprintf(msg, "Grain placed %d,%d (%d,%d) colour:%d; Total:%d\n", x,y, int(grains[i].x), int(grains[i].y), renderer.getColourId(colour), numGrains );
+sprintf(msg, "Grain placed %d,%d (%d,%d) vel: %d,%d colour:%d; Total:%d\n", x,y, int(grains[i].x),int(grains[i].y), vx,vy, renderer.getColourId(colour), numGrains );
 renderer.outputMessage(msg);
-*/
+
 }
 
 uint16_t FallingSand::getGrainCount()
