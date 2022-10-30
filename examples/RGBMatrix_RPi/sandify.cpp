@@ -29,7 +29,7 @@
 #include "pixel-mapper.h"
 #include "graphics.h"
 
-#include "fallingsand.h"
+#include "gravityparticles.h"
 #include "golife.h"
 #include "crawler.h"
 
@@ -55,9 +55,9 @@ uint64_t micros()
 // using the syntax *this
 class Animation : public ThreadedCanvasManipulator, public RGBMatrixRenderer {
     public:
-        Animation(Canvas *m, uint16_t width, uint16_t height, int delay_ms, int accel_, int shake, int numGrains)
-            : ThreadedCanvasManipulator(m), RGBMatrixRenderer{width,height}, delay_ms_(delay_ms), animSand(*this,shake), 
-              animGol(*this,20,delay_ms_), animCrawl(*this,50)
+        Animation(Canvas *m, uint16_t width, uint16_t height, int delay_ms, int accel_, uint16_t shake_, uint16_t numGrains_, uint8_t bounce_)
+            : ThreadedCanvasManipulator(m), RGBMatrixRenderer{width,height}, delay_ms_(delay_ms), animSand(*this,shake_,bounce_), 
+              animGol(*this,20,delay_ms_,0), animCrawl(*this,50,4)
         {
             
             accel = accel_;
@@ -117,12 +117,12 @@ class Animation : public ThreadedCanvasManipulator, public RGBMatrixRenderer {
                             break;
                         default:
                             //Turn cells into grains
-                            animSand.imgToGrains();
+                            animSand.imgToParticles();
                     }
                     
                 }
 
-                // Limit the animation frame rate to MAX_FPS.  Because the subsequent sand
+                // Limit the animation frame rate to MAX_FPS.  Because the subsequent particle
                 // calculations are non-deterministic (don't always take the same amount
                 // of time, depending on their current states), this helps ensure that
                 // things like gravity appear constant in the simulation.
@@ -132,7 +132,7 @@ class Animation : public ThreadedCanvasManipulator, public RGBMatrixRenderer {
                 prevTime = micros();
 
                 //Reset cycles before mode is changed based on speed of update
-                cycles = 400000 * getGridWidth() / t;
+                cycles = 100000 * getGridWidth() / t;
                 if (accel < 5) cycles = 2*cycles;
             }
         }
@@ -155,12 +155,12 @@ class Animation : public ThreadedCanvasManipulator, public RGBMatrixRenderer {
 
     private:
         int delay_ms_;
-        FallingSand animSand;
+        GravityParticles animSand;
         GameOfLife animGol;
         Crawler animCrawl;
         int16_t accel;
         uint32_t counter, cycles;
-        uint8_t mode = 0;
+        uint8_t mode = 2;
 
         virtual void setPixel(uint16_t x, uint16_t y, RGB_colour colour) 
         {
@@ -178,12 +178,13 @@ static int usage(const char *progname) {
             "\t-t <seconds>   : Run for these number of seconds, then exit.\n"
             "\t-n <number>    : Number of grains of sand.\n"
             "\t-g <number>    : Gravity force (0-100 is sensible, but takes higher).\n"
-            "\t-s <number>    : Random shake force (0-100 is sensible, but takes higher).\n");
+            "\t-s <number>    : Random shake force (0-100 is sensible, but takes higher).\n"
+            "\t-e <number>    : Bounce energy (0-255). Max 255 means no loss of energy.\n");
 
     rgb_matrix::PrintMatrixFlags(stderr);
 
-    fprintf(stderr, "Example:\n\t%s -n 64 -g 10 -s 5 -t 10 \n"
-            "Runs demo for 10 seconds\n", progname);
+    fprintf(stderr, "Example:\n\t%s -n 64 -g 10 -s 5 -e 150 -t 60 \n"
+            "Runs demo for 60 seconds\n", progname);
     return 1;
 }
 
@@ -194,6 +195,7 @@ int main(int argc, char *argv[]) {
     int accel = 10;
     int shake = 0;
     int numGrains = 4;
+    uint8_t bounce = 100;
 
     srand(time(NULL));
  
@@ -212,7 +214,7 @@ int main(int argc, char *argv[]) {
     }
 
     int opt;
-    while ((opt = getopt(argc, argv, "dD:t:r:P:g:s:c:n:p:b:m:LR:")) != -1) {
+    while ((opt = getopt(argc, argv, "dD:t:r:P:g:s:e:c:n:p:b:m:LR:")) != -1) {
         switch (opt) {
         case 't':
         runtime_seconds = atoi(optarg);
@@ -232,6 +234,10 @@ int main(int argc, char *argv[]) {
 
         case 's':
         shake = atoi(optarg);
+        break;
+
+        case 'e':
+        bounce = atoi(optarg);
         break;
 
         // These used to be options we understood, but deprecated now. Accept
@@ -292,7 +298,7 @@ int main(int argc, char *argv[]) {
     // The ThreadedCanvasManipulator objects are filling
     // the matrix continuously.
     ThreadedCanvasManipulator *image_gen = NULL;
-    image_gen = new Animation(canvas, canvas->width(), canvas->height(), scroll_ms, accel, shake, numGrains);
+    image_gen = new Animation(canvas, canvas->width(), canvas->height(), scroll_ms, accel, shake, numGrains, bounce);
 
     // Set up an interrupt handler to be able to stop animations while they go
     // on. Note, each demo tests for while (running() && !interrupt_received) {},
