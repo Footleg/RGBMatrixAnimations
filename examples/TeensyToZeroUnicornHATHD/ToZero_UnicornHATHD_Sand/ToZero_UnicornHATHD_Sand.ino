@@ -23,7 +23,7 @@
 
 /***** Project Includes *****/
 #include "UnicornHD.h"
-#include "fallingsand.h" //This is the animation class used to generate output for the display
+#include "gravityparticles.h" //This is the animation class used to generate output for the display
 
 // RGB Matrix class which passes itself as a renderer implementation into the animation class.
 // Needs to be declared before the global variable accesses it in this file.
@@ -54,10 +54,10 @@ class Animation : public RGBMatrixRenderer {
             //Set up falling sand grains in 4 coloured blocks in the corners of the display
             for (int x=0; x<4; x++){
                 for (int y=0; y<4; y++){
-                    animSand.addGrain(x,y+11,RGB_colour{255,255,0});
-                    animSand.addGrain(x+11,y+11,RGB_colour{0,255,255});
-                    animSand.addGrain(x+11,y,RGB_colour{255,0,0});
-                    animSand.addGrain(x,y,RGB_colour{0,255,0});
+                    animSand.addParticle(x,y+11,RGB_colour{255,255,0});
+                    animSand.addParticle(x+11,y+11,RGB_colour{0,255,255});
+                    animSand.addParticle(x+11,y,RGB_colour{255,0,0});
+                    animSand.addParticle(x,y,RGB_colour{0,255,0});
                 }
             }
             
@@ -142,7 +142,7 @@ class Animation : public RGBMatrixRenderer {
 
     private:
         UnicornHD unicorn;
-        FallingSand animSand;
+        GravityParticles animSand;
         int counter = 0;
         int direction = 0;
         int16_t  accel;
