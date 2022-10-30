@@ -184,7 +184,7 @@ void Crawler::runCycle()
                     leadPixel.vy = dir*rand()%renderer.SUBPIXEL_RES;
                 }
                 else {
-                    leadPixel.vx = renderer.SUBPIXEL_RES;
+                    leadPixel.vx = dir*renderer.SUBPIXEL_RES;
                     leadPixel.vy = 0;
                 }
             }
@@ -195,7 +195,7 @@ void Crawler::runCycle()
                 }
                 else {
                     leadPixel.vx = 0;
-                    leadPixel.vy = renderer.SUBPIXEL_RES;
+                    leadPixel.vy = dir*renderer.SUBPIXEL_RES;
                 }
                 
             }
