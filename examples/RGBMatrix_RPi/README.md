@@ -16,6 +16,10 @@ Run the simplecrawler example with the command line (suitable for a Raspberry Pi
 ```bash
 sudo ./simplecrawl --led-slowdown-gpio=4
 ```
+For larger panels, you need to set the resolution of each panel, and may want to turn down the brightness to consume less power.
+```bash
+sudo ./simplecrawl --led-slowdown-gpio=4 --led-rows=64 --led-cols=64 --led-brightness=80
+```
 The command line options are explained under the demo project in rpi-rgb-led-matrix/examples-api-use, or run the example with this command for a summary of command line options:
 ```bash
 sudo ./simplecrawl -h
@@ -27,4 +31,12 @@ sudo ./gol --led-slowdown-gpio=4
 Try Falling Sand:
 ```bash
 sudo ./sand --led-slowdown-gpio=4 -n 200 -g 50 -s 10
+```
+Sparks uses the gravity particles with different configuration options to create high energy bouncy sparks:
+```bash
+sudo ./sparks --led-slowdown-gpio=4 -n 40 -e 250 -g 1
+```
+Text2Sand shows how pixels rended onto the display can be converted into particles:
+```bash
+sudo ./text2sand --led-slowdown-gpio=4 -f ../../../fonts/8x13.bdf -g 10 -s 5 -t 10 Hello
 ```

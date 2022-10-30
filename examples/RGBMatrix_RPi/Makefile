@@ -40,8 +40,10 @@ $(ODIR)/%.o : %.cpp
 # Specific dependencies for each binary need to be declared first, then a general target compiles them all
 simplecrawl : $(ODIR)/simplecrawl.o $(ODIR)/crawler.o $(ODIR)/RGBMatrixRenderer.o 
 gol : $(ODIR)/gol.o $(ODIR)/golife.o $(ODIR)/RGBMatrixRenderer.o 
-sand : $(ODIR)/sand.o $(ODIR)/fallingsand.o $(ODIR)/RGBMatrixRenderer.o 
-sandify : $(ODIR)/sandify.o $(ODIR)/fallingsand.o $(ODIR)/golife.o $(ODIR)/crawler.o $(ODIR)/RGBMatrixRenderer.o 
+sand : $(ODIR)/sand.o $(ODIR)/gravityparticles.o $(ODIR)/RGBMatrixRenderer.o 
+sparks : $(ODIR)/sparks.o $(ODIR)/gravityparticles.o $(ODIR)/RGBMatrixRenderer.o 
+sandify : $(ODIR)/sandify.o $(ODIR)/gravityparticles.o $(ODIR)/golife.o $(ODIR)/crawler.o $(ODIR)/RGBMatrixRenderer.o 
+text2sand : $(ODIR)/text2sand.o $(ODIR)/gravityparticles.o $(ODIR)/RGBMatrixRenderer.o 
 
 # All the binaries that have the same name as the object file.q
 % : $(ODIR)/%.o $(RGB_LIBRARY)

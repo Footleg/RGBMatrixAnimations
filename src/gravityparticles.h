@@ -1,14 +1,22 @@
 /**************************************************************************************************
- * Falling Sand simulation
+ * Particles simulation
  * 
  * This implementation was written as a reusable animator class where the RGB matrix hardware
  * rendering class is passed in, so it can be used with any RGB array display by writing an 
- * implementation of a renderer class to set pixels/LED colours on the hardware.
+ * implementation of a renderer class to set pixels/LED colours on your specific hardware.
  *
  * Based on original code by https://github.com/PaintYourDragon published as the LED sand example 
  * in the Adafruit Learning Guides here https://github.com/adafruit/Adafruit_Learning_System_Guides
  * 
- * Copyright (C) 2020 Paul Fretwell - aka 'Footleg'
+ * The original 'sand particles' idea has been extended to simulate other particle behaviours
+ * including 'sparks' which are much lighter and can fracture into multiple new particles as they
+ * decay in speed and brightness. 
+ * 
+ * Added LED cube support. Acceleration is now supported in 3D coordinates, and applies differently 
+ * to particles depending on which matrix panel they are on (each cube face has gravity acting in a 
+ * different direction with respect to the X and Y directions on that panel).
+ * 
+ * Copyright (C) 2022 Paul Fretwell - aka 'Footleg'
  * 
  * This is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -41,7 +49,7 @@
 #include "RGBMatrixRenderer.h"
 
 
-class FallingSand
+class GravityParticles
 {
     //variables
     public:
@@ -50,14 +58,14 @@ class FallingSand
         int delayms;
         RGBMatrixRenderer &renderer;
 
-        struct Grain {
+        struct Particle {
             uint16_t  x,  y; // Position
             int16_t vx, vy; // Velocity
         };
-        Grain* grains;
+        Particle* particles;
         uint16_t spaceMultiplier;
-        uint16_t maxGrains;
-        uint16_t numGrains;
+        uint16_t maxParticles;
+        uint16_t numParticles;
         uint16_t maxX;
         uint16_t maxY;
         int16_t accelX;
@@ -65,17 +73,19 @@ class FallingSand
         int16_t accelAbs;
         uint16_t shake;
         uint16_t velCap;
+        float_t loss;
     //functions
     public:
-        FallingSand(RGBMatrixRenderer&,uint16_t);
-        ~FallingSand();
+        GravityParticles(RGBMatrixRenderer&,uint16_t,uint8_t=10);
+        ~GravityParticles();
         void runCycle();
         void setAcceleration(int16_t,int16_t);
-        void addGrain(RGB_colour);
-        void addGrain(uint16_t,uint16_t,RGB_colour);
-        void clearGrains();
-        uint16_t getGrainCount();
-        void imgToGrains();
+        void setAcceleration(int16_t,int16_t,int16_t);
+        void addParticle(RGB_colour,int16_t=0,int16_t=0);
+        void addParticle(uint16_t,uint16_t,RGB_colour,int16_t=0,int16_t=0);
+        void clearParticles();
+        uint16_t getParticleCount();
+        void imgToParticles();
     protected:
     private:
-}; //FallingSand
+}; //GravityParticles

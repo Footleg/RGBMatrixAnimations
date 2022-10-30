@@ -8,7 +8,7 @@
  * Based on code which was originally published in my Ardunio code examples repo:
  * https://github.com/Footleg/arduino
  * 
-* Copyright (C) 2020 Paul Fretwell - aka 'Footleg'
+* Copyright (C) 2022 Paul Fretwell - aka 'Footleg'
  * 
  * This is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -56,6 +56,8 @@ class GameOfLife
         uint16_t delayms;
         RGB_colour cellColour;
         uint8_t fadeSteps;
+        uint8_t fadeStep = 1;
+        uint8_t startPattern = 0;
         RGBMatrixRenderer &renderer;
         uint8_t** cells; //8bits representing [null,null,deaths,births,prev3,prev2,prev1,alive]
         uint16_t alive = 0;
@@ -70,17 +72,19 @@ class GameOfLife
         uint32_t iterationsMax = 0;
         uint16_t panelSize;
         bool startOver;
+        bool fadeOn;
     //functions
     public:
-        GameOfLife(RGBMatrixRenderer&,uint8_t,uint16_t);
+        GameOfLife(RGBMatrixRenderer&,uint8_t,uint16_t,uint8_t);
         ~GameOfLife();
         void runCycle();
         void restart();
         bool getCellState(uint16_t,uint16_t);
+        void setStartPattern(uint8_t);
         RGB_colour getCellColour();
     protected:
     private:
         void initialiseGrid(uint8_t);
         void applyChanges();
-        void fadeInChanges();
+        void fadeInChanges(uint8_t);
 }; //GameOfLife

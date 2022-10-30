@@ -8,7 +8,7 @@
  * Based on code which was originally published in my Ardunio code examples repo:
  * https://github.com/Footleg/arduino
  * 
- * Copyright (C) 2020 Paul Fretwell - aka 'Footleg'
+ * Copyright (C) 2022 Paul Fretwell - aka 'Footleg'
  * 
  * This is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,7 +32,7 @@
 #include "golife.h"
 
 // default constructor
-GameOfLife::GameOfLife(RGBMatrixRenderer &renderer_, uint8_t fadeSteps_, uint16_t delay_)
+GameOfLife::GameOfLife(RGBMatrixRenderer &renderer_, uint8_t fadeSteps_, uint16_t delay_, uint8_t startPattern_)
     : renderer(renderer_)
 {
     // Allocate memory
@@ -43,8 +43,11 @@ GameOfLife::GameOfLife(RGBMatrixRenderer &renderer_, uint8_t fadeSteps_, uint16_
 
     //Initialise member variables
     fadeSteps = fadeSteps_;
+    fadeStep = fadeSteps;
     delayms = delay_;
     startOver = true;
+    fadeOn = false;
+    startPattern = startPattern_;
 
     panelSize = renderer.getGridHeight();
     if (renderer.getGridWidth() < panelSize)
@@ -86,11 +89,11 @@ void GameOfLife::runCycle()
     *  - Population remains constant at 5 cells for 4xPanel size consecutive frames (gliding pattern)
     *  - Population remains constant at >5 cells 10xPanel size frames (as glider may collide with something)
     *  - Population cycles over a 4 step cycle for over 3xPanel size frames
-    *  - Pattern cycles over 6-24 frames for over 150 cycles
+    *  - Pattern cycles over 6-24 frames for over 200 cycles
     */
     if ( startOver || (alive == 0) || (unchangedCount > 5 ) || (repeat2Count > 6) || (repeat3Count > 35) 
         || (unchangedPopulation[0] > panelSize*10) || ( (unchangedPopulation[0] > panelSize*4) && (alive == 5 ) ) 
-        || (unchangedPopulation[3] > panelSize*3) || (maxRepeatsCount > 150) )
+        || (unchangedPopulation[3] > panelSize*3) || (maxRepeatsCount > 200) )
     {
         //Update min and max iterations counters
         if (iterations > 0)
@@ -132,19 +135,30 @@ void GameOfLife::runCycle()
         if (iterations > 0)
             renderer.outputMessage(msg);
 
-        //initialiseGrid(renderer.random_int16(0,8));
-        initialiseGrid(0);
+        initialiseGrid(startPattern);
         
+    }
+    else if (fadeOn) {
+        fadeStep++;
+        fadeInChanges(fadeStep);
+        if (fadeStep >= fadeSteps) {
+            //End of fade, so update display
+            fadeOn = false;
+            renderer.msSleep(delayms);
+            applyChanges();
+            renderer.updateDisplay();
+        }
     }
     else {
         //Run and update cycle
-        if ((delayms < 5) && ( (alive == 0) || (unchangedCount > 5 ) || (repeat2Count > 6) || (repeat3Count > 10) 
-            || (unchangedPopulation[0] > 10)  
-            || (unchangedPopulation[3] > 10) || (maxRepeatsCount > 20) ) )
-        {
-            //Debug delay
-            renderer.msSleep(100);
-        }
+        // if ((delayms < 5) && ( (alive == 0) || (unchangedCount > 5 ) || (repeat2Count > 6) || (repeat3Count > 10) 
+        //     || (unchangedPopulation[0] > 10)  
+        //     || (unchangedPopulation[3] > 10) || (maxRepeatsCount > 20) ) )
+        // {
+        //     //Debug delay
+        //     renderer.msSleep(100);
+        // }
+
 
         //Apply rules of Game of Life to determine cells dying and being born
         for(y = 0; y < renderer.getGridHeight(); ++y)
@@ -189,22 +203,38 @@ void GameOfLife::runCycle()
         }
 
         //Fade cells in/out for births/deaths if fade steps set
-        if (fadeSteps > 1)
-            fadeInChanges();
-
-        applyChanges();
-        renderer.updateDisplay();
+        if (fadeSteps > 1) {
+            // Trigger fade steps mode by resetting steps counter
+            fadeStep = 0;
+            fadeOn = true;
+        }
+        else {
+            applyChanges();
+            renderer.updateDisplay();
+        }
 
         if (alive == 0)
         {
-        //Pause to show end of population before it gets reset
-        uint16_t waitLength = delayms * 100;
-        if (waitLength > 3000) waitLength = 3000;
-        renderer.msSleep(waitLength); 
+            //Pause to show end of population before it gets reset
+            uint16_t waitLength = delayms * 100;
+            if (waitLength > 3000) waitLength = 3000;
+            renderer.msSleep(waitLength); 
         }
     }
 
+    renderer.msSleep(delayms);
     iterations++;
+}
+
+// Set index of preset pattern to start animation with
+void GameOfLife::setStartPattern(uint8_t patternIdx)
+{
+    if ( (patternIdx > 0) && (patternIdx < 8) ) {
+        startPattern = patternIdx;
+    } 
+    else {
+        startPattern = 0;
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -220,6 +250,8 @@ void GameOfLife::initialiseGrid(uint8_t patternIdx)
 
     alive = 0;
     iterations = 0;
+    fadeOn = false;
+    fadeStep = fadeSteps;
     unchangedCount = 0;
     for (uint8_t x = 0; x < maxRepeatCycle; ++x) unchangedPopulation[x] = 0;
     repeat2Count = 0;
@@ -611,29 +643,30 @@ void GameOfLife::applyChanges()
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Fade births in green, and death to red
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-void GameOfLife::fadeInChanges()
+void GameOfLife::fadeInChanges(uint8_t step)
 {
     uint8_t halfSteps = fadeSteps / 2; 
     RGB_colour born;
     RGB_colour died;
     uint16_t fadeDelay = delayms;
-    uint8_t maxBrightness = (uint32_t)(cellColour.r + cellColour.g + cellColour.b)/3;
+    uint16_t maxBrightness = (uint16_t)(cellColour.r + cellColour.g + cellColour.b)/2;
+    if (maxBrightness > 255) maxBrightness = 255;
 
-    for(uint8_t i = 1; i < fadeSteps+1; ++i)
-    {
-        if (i < halfSteps)
+    // for(uint8_t i = 1; i < fadeSteps+1; ++i)
+    // {
+        if (step <= halfSteps)
         {
             //Set fade from black to green for cells being born
-            born = renderer.blendColour(RGB_colour{0,0,0}, RGB_colour{0,maxBrightness,0}, i, halfSteps);
+            born = renderer.blendColour(RGB_colour{0,0,0}, RGB_colour{0,maxBrightness,0}, step, halfSteps);
             //Set fade cells dying out from current colour to red
-            died = renderer.blendColour(cellColour, RGB_colour{maxBrightness,0,0}, i, halfSteps);
+            died = renderer.blendColour(cellColour, RGB_colour{maxBrightness,0,0}, step, halfSteps);
         }
         else
         {
             //Set fade from green to active cell colour for cells being born
-            born = renderer.blendColour(RGB_colour{0,maxBrightness,0}, cellColour, i-halfSteps, halfSteps);
+            born = renderer.blendColour(RGB_colour{0,maxBrightness,0}, cellColour, step-halfSteps, fadeSteps-halfSteps);
             //Set fade colour for cells dying out from red to black
-            died = renderer.blendColour(RGB_colour{maxBrightness,0,0}, RGB_colour{0,0,0}, i-halfSteps, halfSteps);
+            died = renderer.blendColour(RGB_colour{maxBrightness,0,0}, RGB_colour{0,0,0}, step-halfSteps, fadeSteps-halfSteps);
         }
         
         for(uint16_t y = 0; y < renderer.getGridHeight(); ++y)
@@ -648,6 +681,11 @@ void GameOfLife::fadeInChanges()
                 {
                     renderer.setPixelInstant(x, y, died);
                 }
+                else if ((cells[x][y] & CELL_ALIVE) != 0)
+                {
+                    renderer.setPixelInstant(x, y, cellColour);
+                    //renderer.setPixelInstant(x, y, RGB_colour{192,192,192});
+                }
             }
         }
 /*
@@ -658,8 +696,8 @@ renderer.outputMessage(msg);
         //if (delayms * fadeSteps > 1000) fadeDelay = 1000 / fadeSteps;
 
         renderer.showPixels();
-        renderer.msSleep(fadeDelay);
-    }
+        // renderer.msSleep(fadeDelay);
+    // }
 }
 
 bool GameOfLife::getCellState(uint16_t x, uint16_t y)

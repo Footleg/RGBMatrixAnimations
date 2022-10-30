@@ -6,7 +6,7 @@
  * hardware rendering class is passed in, so it can be used with any RGB array display by writing 
  * an implementation of a renderer class to set pixels/LED colours on the hardware.
  *
- * Copyright (C) 2020 Paul Fretwell - aka 'Footleg'
+ * Copyright (C) 2022 Paul Fretwell - aka 'Footleg'
  * 
  * This is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,15 +25,21 @@
 #include "crawler.h"
 
 // default constructor
-Crawler::Crawler(RGBMatrixRenderer &renderer_, uint16_t steps)
-    : renderer(renderer_), dirChgCount(steps)
+Crawler::Crawler(RGBMatrixRenderer &renderer_, uint16_t steps, uint16_t minSteps, bool anyAngle)
+    : renderer(renderer_), leadPixel(0,0,0,0), colChgCount(steps), dirChgCount(minSteps), anyAngle(anyAngle)
 {
     //Pick random start point
-    x = rand()%renderer.getGridWidth();
-    y = rand()%renderer.getGridHeight();
+    leadPixel.x = rand()%renderer.getGridWidth();
+    leadPixel.y = rand()%renderer.getGridHeight();
 
-    //Start random direction
-    direction = rand()%4;
+    //Force random direction change on start
+    dirChg = minSteps + 1;
+
+    //Debugging, hard coded position and velocity
+    // leadPixel.x = 10;
+    // leadPixel.y = 3;
+    // leadPixel.vx = -100;
+    // leadPixel.vy = 0;
 
     //Initial random colour
     colour = renderer.getRandomColour();
@@ -53,84 +59,159 @@ void Crawler::runCycle()
     sprintf(msg, "%s %d %s %d %s %d %s", "Drawing colour: ", colour.r, ",",  colour.g,  ",",  colour.b, "\n" );
     renderer.outputMessage(msg);
 */    
+    
     //Set current position pixel
-    renderer.setPixelColour(x, y, colour);
+    renderer.setPixelColour(leadPixel.x, leadPixel.y, colour);
 
-    //Clear pixels around direction of travel
-    switch(direction) {
-        case 0: //Up
-            renderer.setPixelColour(renderer.newPositionX(x,-1,false), y, RGB_colour{0, 0, 0} );
-            renderer.setPixelColour(renderer.newPositionX(x,1,false), y, RGB_colour{0, 0, 0} );
-            renderer.setPixelColour(renderer.newPositionX(x,-1), renderer.newPositionY(y,1), RGB_colour{0, 0, 0} );
-            renderer.setPixelColour(renderer.newPositionX(x,1), renderer.newPositionY(y,1), RGB_colour{0, 0, 0} );
-            renderer.setPixelColour(x, renderer.newPositionY(y,1), RGB_colour{0, 0, 0} );
-            break;
-        case 1: //Right
-            renderer.setPixelColour(x, renderer.newPositionY(y,-1), RGB_colour{0, 0, 0} );
-            renderer.setPixelColour(x, renderer.newPositionY(y,1), RGB_colour{0, 0, 0} );
-            renderer.setPixelColour(renderer.newPositionX(x,1), renderer.newPositionY(y,-1), RGB_colour{0, 0, 0} );
-            renderer.setPixelColour(renderer.newPositionX(x,1), renderer.newPositionY(y,1), RGB_colour{0, 0, 0} );
-            renderer.setPixelColour(renderer.newPositionX(x,1), y, RGB_colour{0, 0, 0} );
-            break;
-        case 2: //Down
-            renderer.setPixelColour(renderer.newPositionX(x,-1,false), y, RGB_colour{0, 0, 0} );
-            renderer.setPixelColour(renderer.newPositionX(x,1,false), y, RGB_colour{0, 0, 0} );
-            renderer.setPixelColour(renderer.newPositionX(x,-1), renderer.newPositionY(y,-1), RGB_colour{0, 0, 0} );
-            renderer.setPixelColour(renderer.newPositionX(x,1), renderer.newPositionY(y,-1), RGB_colour{0, 0, 0} );
-            renderer.setPixelColour(x, renderer.newPositionY(y,-1), RGB_colour{0, 0, 0} );
-            break;
-        case 3: //Left
-            renderer.setPixelColour(x, renderer.newPositionY(y,-1), RGB_colour{0, 0, 0} );
-            renderer.setPixelColour(x, renderer.newPositionY(y,1), RGB_colour{0, 0, 0} );
-            renderer.setPixelColour(renderer.newPositionX(x,-1), renderer.newPositionY(y,-1), RGB_colour{0, 0, 0} );
-            renderer.setPixelColour(renderer.newPositionX(x,-1), renderer.newPositionY(y,1), RGB_colour{0, 0, 0} );
-            renderer.setPixelColour(renderer.newPositionX(x,-1), y, RGB_colour{0, 0, 0} );
-            break;
+    if (anyAngle==false){
+        //Clear pixels around direction of travel
+        if (leadPixel.vy == renderer.SUBPIXEL_RES) {
+            //Up
+            MovingPixel cursor(leadPixel.x,leadPixel.y,-renderer.SUBPIXEL_RES,0);
+            cursor = renderer.updatePosition(cursor);
+            renderer.setPixelColour(cursor.x, cursor.y, RGB_colour{0, 0, 0} );
+            cursor.vx = 0;
+            cursor.vy = renderer.SUBPIXEL_RES;
+            cursor = renderer.updatePosition(cursor);
+            renderer.setPixelColour(cursor.x, cursor.y, RGB_colour{0, 0, 0} );
+            cursor.vx = renderer.SUBPIXEL_RES;
+            cursor.vy = 0;
+            cursor = renderer.updatePosition(cursor);
+            renderer.setPixelColour(cursor.x, cursor.y, RGB_colour{0, 0, 0} );
+            cursor = renderer.updatePosition(cursor);
+            renderer.setPixelColour(cursor.x, cursor.y, RGB_colour{0, 0, 0} );
+            cursor.vx = 0;
+            cursor.vy = -renderer.SUBPIXEL_RES;
+            cursor = renderer.updatePosition(cursor);
+            renderer.setPixelColour(cursor.x, cursor.y, RGB_colour{0, 0, 0} );
+
+        } 
+        else if (leadPixel.vx == renderer.SUBPIXEL_RES)
+        {
+            //Right
+            MovingPixel cursor(leadPixel.x,leadPixel.y,0,renderer.SUBPIXEL_RES);
+            cursor = renderer.updatePosition(cursor);
+            renderer.setPixelColour(cursor.x, cursor.y, RGB_colour{0, 0, 0} );
+            cursor.vx = renderer.SUBPIXEL_RES;
+            cursor.vy = 0;
+            cursor = renderer.updatePosition(cursor);
+            renderer.setPixelColour(cursor.x, cursor.y, RGB_colour{0, 0, 0} );
+            cursor.vx = 0;
+            cursor.vy = -renderer.SUBPIXEL_RES;
+            cursor = renderer.updatePosition(cursor);
+            renderer.setPixelColour(cursor.x, cursor.y, RGB_colour{0, 0, 0} );
+            cursor = renderer.updatePosition(cursor);
+            renderer.setPixelColour(cursor.x, cursor.y, RGB_colour{0, 0, 0} );
+            cursor.vx = -renderer.SUBPIXEL_RES;
+            cursor.vy = 0;
+            cursor = renderer.updatePosition(cursor);
+            renderer.setPixelColour(cursor.x, cursor.y, RGB_colour{0, 0, 0} );
+        } 
+        else if (leadPixel.vy == -renderer.SUBPIXEL_RES)
+        {
+            //Down
+            MovingPixel cursor(leadPixel.x,leadPixel.y,-renderer.SUBPIXEL_RES,0);
+            cursor = renderer.updatePosition(cursor);
+            renderer.setPixelColour(cursor.x, cursor.y, RGB_colour{0, 0, 0} );
+            cursor.vx = 0;
+            cursor.vy = -renderer.SUBPIXEL_RES;
+            cursor = renderer.updatePosition(cursor);
+            renderer.setPixelColour(cursor.x, cursor.y, RGB_colour{0, 0, 0} );
+            cursor.vx = renderer.SUBPIXEL_RES;
+            cursor.vy = 0;
+            cursor = renderer.updatePosition(cursor);
+            renderer.setPixelColour(cursor.x, cursor.y, RGB_colour{0, 0, 0} );
+            cursor = renderer.updatePosition(cursor);
+            renderer.setPixelColour(cursor.x, cursor.y, RGB_colour{0, 0, 0} );
+            cursor.vx = 0;
+            cursor.vy = renderer.SUBPIXEL_RES;
+            cursor = renderer.updatePosition(cursor);
+            renderer.setPixelColour(cursor.x, cursor.y, RGB_colour{0, 0, 0} );
+        } 
+        else 
+        {
+            //Left
+            MovingPixel cursor(leadPixel.x,leadPixel.y,0,renderer.SUBPIXEL_RES);
+            cursor = renderer.updatePosition(cursor);
+            renderer.setPixelColour(cursor.x, cursor.y, RGB_colour{0, 0, 0} );
+            cursor.vx = -renderer.SUBPIXEL_RES;
+            cursor.vy = 0;
+            cursor = renderer.updatePosition(cursor);
+            renderer.setPixelColour(cursor.x, cursor.y, RGB_colour{0, 0, 0} );
+            cursor.vx = 0;
+            cursor.vy = -renderer.SUBPIXEL_RES;
+            cursor = renderer.updatePosition(cursor);
+            renderer.setPixelColour(cursor.x, cursor.y, RGB_colour{0, 0, 0} );
+            cursor = renderer.updatePosition(cursor);
+            renderer.setPixelColour(cursor.x, cursor.y, RGB_colour{0, 0, 0} );
+            cursor.vx = renderer.SUBPIXEL_RES;
+            cursor.vy = 0;
+            cursor = renderer.updatePosition(cursor);
+            renderer.setPixelColour(cursor.x, cursor.y, RGB_colour{0, 0, 0} );
+        }
     }
     
     renderer.updateDisplay();
     
-    //Update direction if more than 1 step since last change
+    //Update direction if more than set number of steps since last change
     dirChg++;
-    if (dirChg > 1) {
+    if (dirChg > dirChgCount) {
+        dirChg = 0;
+        
+        // 2 out of 8 chance we change direction
+        // 0 or 1 mean opposite directions to turn from current direction
+        // 2 or above means keep going in current direction
         int c = rand()%8;
+        int dir = 0;
         switch(c) {
-            case 0: //Turn left
-                direction--;
-                dirChg = 0;
+            case 0: 
+                dir = -1;
+               break;
+            case 1: 
+                dir = 1;
                 break;
-            case 1: //Turn right
-                direction++;
-                dirChg = 0;
-                break;
-
         }
-        if (direction > 3)
-            direction = 0;
-        else if (direction < 0)
-            direction = 3;
+
+        //Override random change if no velocity (happens on start-up)
+        if (leadPixel.vx == 0 && leadPixel.vy == 0) {
+            dir = 1;
+        }
+
+        if (dir != 0 ) {
+            if (leadPixel.vx == 0) {
+                if (anyAngle) {
+                    leadPixel.vx = dir*rand()%renderer.SUBPIXEL_RES+renderer.SUBPIXEL_RES;
+                    leadPixel.vy = dir*rand()%renderer.SUBPIXEL_RES;
+                }
+                else {
+                    leadPixel.vx = dir*renderer.SUBPIXEL_RES;
+                    leadPixel.vy = 0;
+                }
+            }
+            else {
+                if (anyAngle) {
+                    leadPixel.vx = dir*rand()%renderer.SUBPIXEL_RES;
+                    leadPixel.vy = dir*rand()%renderer.SUBPIXEL_RES+renderer.SUBPIXEL_RES;
+                }
+                else {
+                    leadPixel.vx = 0;
+                    leadPixel.vy = dir*renderer.SUBPIXEL_RES;
+                }
+                
+            }
+        }
     }
 
     //Update postion
-    switch(direction) {
-        case 0: //Up
-            y = renderer.newPositionY(y,1);
-            break;
-        case 1: //Right
-            x = renderer.newPositionX(x,1);
-            break;
-        case 2: //Down
-            y = renderer.newPositionY(y,-1);
-            break;
-        case 3: //Left
-            x = renderer.newPositionX(x,-1);
-            break;
-    }
-    //fprintf(stderr, "%s %d %s %d %s", "Pos: ", x, ",",  y, "\n" );
+    leadPixel = renderer.updatePosition(leadPixel);
+
+    char msg[64];
+    sprintf(msg, "New pos: %d,%d Vel: %d,%d\n", leadPixel.x, leadPixel.y, leadPixel.vx, leadPixel.vy );
+    renderer.outputMessage(msg);
 
     //Update colour every x steps
     colChg++;
-    if (colChg >= dirChgCount) {
+    if (colChg >= colChgCount) {
         colChg = 0;
         colour = renderer.getRandomColour();
     }

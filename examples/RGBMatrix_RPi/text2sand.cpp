@@ -20,6 +20,10 @@
  * along with this software.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <getopt.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <chrono>
 #include <signal.h>
@@ -29,11 +33,9 @@
 #include "pixel-mapper.h"
 #include "graphics.h"
 
-#include "gravityparticles.h" //This is the animation class used to generate output for the display
+#include "gravityparticles.h"
 
 using namespace rgb_matrix;
-
-uint64_t prevTime  = 0;      // Used for frames-per-second throttle
 
 uint8_t backbuffer = 0;      // Index for double-buffered animation
 
@@ -50,140 +52,191 @@ uint64_t micros()
     return us; 
 }
 
-// RGB Matrix class which pass itself as a renderer implementation into the GOL class
-// Passing as a reference into gol class, so need to dereference 'this' which is a pointer
+//Readable Canvas, allows us to use drawing commands and then read back the pixel states
+class ReadableCanvas : public Canvas {
+    public:
+        ReadableCanvas(uint16_t width, uint16_t height)
+        : cwidth(width), cheight(height)
+        {
+            data = new RGB_colour[width * height];
+            Clear();
+
+        }
+        virtual ~ReadableCanvas()
+        {
+            delete [] data;
+        }
+
+        virtual int width() const {
+            return cwidth;
+        }
+        virtual int height() const {
+            return cheight;
+        }
+
+        // Set pixel at coordinate (x,y) with given color. Pixel (0,0) is the
+        // top left corner.
+        // Each color is 8 bit (24bpp), 0 black, 255 brightest.
+        virtual void SetPixel(int x, int y, uint8_t red, uint8_t green, uint8_t blue)
+        {
+            RGB_colour col(red,green,blue);
+            //fprintf(stderr,"Setting readable pixel at %d,%d: RGB(%d,%d,%d)\n", x,y,red,green,blue);
+            data[y*cwidth+x] = col;
+        }
+
+        RGB_colour GetPixel(int x, int y)
+        {
+            RGB_colour colour = data[y*cwidth+x];
+            /*
+            if (colour.r > 0) {
+                fprintf(stderr,"Fetched Pixel %d,%d: RGB(%d,%d,%d)\n", x,y,colour.r,colour.g,colour.b);
+            } 
+            */
+            return colour;
+        }
+
+        // Clear screen to be all black.
+        virtual void Clear()
+        {
+            Fill(0,0,0);
+        };
+
+        // Fill screen with given 24bpp color.
+        virtual void Fill(uint8_t red, uint8_t green, uint8_t blue)
+        {
+            uint16_t pixelCount = cwidth * cheight;
+            for (uint16_t i=0; i < pixelCount; i++ ) {
+                data[i].r = red;
+                data[i].g = green;
+                data[i].b = blue;
+            }
+        };
+
+        // Fill screen with given 24bpp color.
+        virtual void DebugContents()
+        {
+            for (uint16_t y=0; y < cheight; y++ ) {
+                for (uint16_t x=0; x < cwidth; x++ ) {
+                    if (data[y*cwidth + x].r > 0) {
+                        fprintf(stderr,"X");
+                    }
+                    else{
+                        fprintf(stderr,".");
+                    }
+                }
+                fprintf(stderr,"\n");
+            }
+        };
+
+    private:
+        int cwidth;
+        int cheight;
+        RGB_colour* data;
+};
+
+// RGB Matrix class which pass itself as a renderer implementation into the animation classes
+// Passing as a reference into animation class, so need to dereference 'this' which is a pointer
 // using the syntax *this
 class Animation : public ThreadedCanvasManipulator, public RGBMatrixRenderer {
     public:
-        Animation(Canvas *m, uint16_t width, uint16_t height, uint16_t delay_ms, int16_t accel_, uint16_t shake_, uint16_t numGrains_, uint8_t bounce_)
-            : ThreadedCanvasManipulator(m), RGBMatrixRenderer{width,height}, delay_ms_(delay_ms), animation(*this,shake_,bounce_), 
-              ax(0), ay(0)
+        Animation(Canvas *m, uint16_t width, uint16_t height, int delay_ms, int accel_, uint16_t shake_, uint8_t bounce_,
+            rgb_matrix::Font &font_, std::string textline_)
+            : ThreadedCanvasManipulator(m), RGBMatrixRenderer{width,height}, delay_ms_(delay_ms), animSand(*this,shake_,bounce_)
         {
+            
             accel = accel_;
-            counter = 0;
-            angle = -1;
-            cycles = 100000;
-            numGrains = numGrains_;
+            cycles = 10000000;
+            font = font_;
+            textline = textline_;
         }
         
         virtual ~Animation(){}
 
         void Run() {
-            uint8_t MAX_FPS=1000/delay_ms_;    // Maximum redraw rate, frames/second
+            uint16_t MAX_FPS=1000/delay_ms_;    // Maximum redraw rate, frames/second
+            counter = 0;
+            uint64_t prevTime = micros();
+            uint64_t prevTime2 = micros();
+            int length = 0;
 
-            RGB_colour red = {255,0,0};
-            RGB_colour yellow = {255,255,0};
-            int wd = gridWidth/5;
-            int curs = gridWidth/4;
-            int ht = gridHeight/4;
+            //Draw text on canvas
+            Color color(200, 46, 140);
             
-            if (ht < wd) {
-                wd = wd / 2;
-                ht = wd + 1;
-                curs = ht;
-            }
+            // length = holds how many pixels our text takes up
+            ReadableCanvas *cvs = NULL;
+            cvs = new ReadableCanvas(gridWidth, gridHeight);
+            length = rgb_matrix::DrawText(cvs, font, 12, 12 + font.baseline(),
+                        color, NULL,
+                        textline.c_str(), 0);
 
-            //Add grains in fixed positions
-            for (int y=0; y<wd;y++) {
-                for (int x=wd/2; x<3*wd/2;x++) {
-                    animation.addParticle(x,y,RGB_colour{0,255,0} );
-                }
-                for (int x=3*wd/2; x<5*wd/2;x++) {
-                    animation.addParticle(x,y,RGB_colour{0,0,255} );
-                }
-                for (int x=5*wd/2; x<7*wd/2;x++) {
-                    animation.addParticle(x,y,RGB_colour{0,255,255} );
-                }
-                for (int x=7*wd/2; x<9*wd/2;x++) {
-                    animation.addParticle(x,y,RGB_colour{255,0,255} );
+            //Now map canvas pixels to renderer
+            cvs->DebugContents();
+            for (uint16_t y=0; y<gridHeight; y++) {
+                for (uint16_t x=0; x<gridWidth; x++) {
+                    RGB_colour pixel = cvs->GetPixel(x,y);
+                    if (pixel.r > 0) {
+                        fprintf(stderr,"Pixel %d,%d: RGB(%d,%d,%d)\n", x,y,pixel.r,pixel.g,pixel.b);
+                    }
+                    
+                    setPixelColour(x,gridHeight-y-1,pixel);
                 }
             }
-
-            //Create some static pixels
-            for (int y=ht; y<gridHeight-ht;y++) {
-                for (int x=wd; x<wd+curs+1;x++) {
-                    setPixelColour(x,y,red);
-                    setPixelColour(gridWidth-x,y,yellow);
-                }
-                if (y%2) curs--;
-            }
-
-            //Add grains in random positions
-            int randGrains = numGrains;
-            for (int i=0; i<randGrains; i++) {
-                //animation.addParticle( getRandomColour() );
-                animation.addParticle( RGB_colour{255,128,0} );
-            }
-
-            //Show LEDs and pause before starting animation
             updateDisplay();
-            msSleep(1000);
 
             while (running() && !interrupt_received) {
-                //Update acceleration every few cycles
-                counter++;
-                if (counter > cycles) {
-                    counter = 0;
-                    angle++;
-                    switch(angle) {
-                        case 0:
-                            ax = 0;
-                            ay = 0;
-                            break;
-                        case 1:
-                            ax = accel;
-                            ay = 0;
-                            break;
-                        case 2:
-                            ax = 0;
-                            ay = -accel;
-                            break;
-                        case 3:
-                            ax = -accel;
-                            ay = 0;
-                            break;
-                        case 4:
-                            ax = 0;
-                            ay = accel;
-                            break;
-                        case 5:
-                            ax = accel;
-                            ay = -accel;
-                            break;
-                        case 6:
-                            ax = -accel;
-                            ay = -accel;
-                            break;
-                        case 7:
-                            ax = -accel;
-                            ay = accel;
-                            break;
-                        case 8:
-                            ax = accel;
-                            ay = accel;
-                            angle = -1;
-                            break;
-                    }
-                    fprintf(stderr,"Angle %d, Accel: %d,%d\n", angle, ax, ay );
-                    animation.setAcceleration(ax,ay);
+
+                switch (mode) {
+                    case 0:
+                        //animGol.runCycle();
+                        usleep(delay_ms_ * 1000); // ms
+                        break;
+
+                    default:
+                        animSand.runCycle();
+                        
+                        if (micros() - prevTime2 > 4000000) {
+                            prevTime2 = micros();
+                            fprintf(stderr,"Change acceleration %d\n", accel);
+                            if(accel != 0.0) {
+                                animSand.setAcceleration( random_int16(-accel,accel), random_int16(-accel,accel) );  
+                            }
+                            else {
+                                fprintf(stderr,"Change acceleration zero,zero\n");
+                                animSand.setAcceleration(0,0);
+                            }
+                        }
+                        break;
                 }
 
+                //Switch mode every now and then
+                counter++;
+                //fprintf(stderr,"Count=%d Cycles=%d\n", counter,cycles );
+                if (counter > cycles) {
+                    counter = 0;
+                    mode++;
+                    if (mode > 3) mode = 2;
+                    switch (mode) {
+                        case 0:
+                            //animGol.restart();
+                            break;
+                        case 1:
+                            //Turn cells into grains
+                            animSand.imgToParticles();
+                    }
+                    
+                }
 
-                
-                animation.runCycle();
-                // Limit the animation frame rate to MAX_FPS.  Because the subsequent sand
+                // Limit the animation frame rate to MAX_FPS.  Because the subsequent particle
                 // calculations are non-deterministic (don't always take the same amount
                 // of time, depending on their current states), this helps ensure that
                 // things like gravity appear constant in the simulation.
-                uint32_t t;
-                
-
+                uint64_t t;
                 while((t = micros() - prevTime) < (100000L / MAX_FPS));
-                //fprintf(stderr,"Cycle time: %d\n", t );
+                //fprintf(stderr,"Cycle time: %llu\n", t );
                 prevTime = micros();
 
-                //Reset cycles before acceleration is changed based on speed of update
-                cycles = 3000000 / t;
+                //Reset cycles before mode is changed based on speed of update
+                cycles = 6000 * getGridWidth() / t;
                 if (accel < 5) cycles = 2*cycles;
             }
         }
@@ -206,10 +259,12 @@ class Animation : public ThreadedCanvasManipulator, public RGBMatrixRenderer {
 
     private:
         int delay_ms_;
-        GravityParticles animation;
-        int16_t ax,ay, accel, angle;
-        uint16_t numGrains;
+        GravityParticles animSand;
+        int16_t accel;
         uint32_t counter, cycles;
+        uint8_t mode = 0;
+        rgb_matrix::Font font;
+        std::string textline;
 
         virtual void setPixel(uint16_t x, uint16_t y, RGB_colour colour) 
         {
@@ -223,16 +278,15 @@ static int usage(const char *progname) {
             progname);
     fprintf(stderr, "Options:\n");
     fprintf(stderr,
+            "\t-f <font-file>    : Use given font.\n"
             "\t-m <msecs>     : Milliseconds pause between updates.\n"
             "\t-t <seconds>   : Run for these number of seconds, then exit.\n"
-            "\t-n <number>    : Number of random grains of sand in addition to square blocks.\n"
             "\t-g <number>    : Gravity force (0-100 is sensible, but takes higher).\n"
-            "\t-s <number>    : Random shake force (0-100 is sensible, but takes higher).\n"
-            "\t-e <number>    : Bounce energy (0-255). Max 255 means no loss of energy.\n");
+            "\t-s <number>    : Random shake force (0-100 is sensible, but takes higher).\n");
 
     rgb_matrix::PrintMatrixFlags(stderr);
 
-    fprintf(stderr, "Example:\n\t%s -n 64 -g 10 -s 5 -t 10 \n"
+    fprintf(stderr, "Example:\n\t%s ../../../fonts/8x13.bdf -g 10 -s 5 -t 10 Hello\n"
             "Runs demo for 10 seconds\n", progname);
     return 1;
 }
@@ -241,10 +295,13 @@ static int usage(const char *progname) {
 int main(int argc, char *argv[]) {
     int runtime_seconds = -1;
     int scroll_ms = 10;
-    int accel = 50;
-    int shake = 10;
-    int numGrains = 4;
-    uint8_t bounce = 100;
+    int accel = 10;
+    int shake = 0;
+    int bounce = 0;
+    const char *bdf_font_file = NULL;
+    bool with_outline = false;
+    std::string line;
+
     srand(time(NULL));
  
     RGBMatrix::Options matrix_options;
@@ -262,7 +319,7 @@ int main(int argc, char *argv[]) {
     }
 
     int opt;
-    while ((opt = getopt(argc, argv, "dD:t:r:P:e:g:s:c:n:p:b:m:LR:")) != -1) {
+    while ((opt = getopt(argc, argv, "dD:t:m:r:P:f:s:c:g:p:b:LR:")) != -1) {
         switch (opt) {
         case 't':
         runtime_seconds = atoi(optarg);
@@ -272,8 +329,8 @@ int main(int argc, char *argv[]) {
         scroll_ms = atoi(optarg);
         break;
 
-        case 'n':
-        numGrains = atoi(optarg);
+        case 'f':
+        bdf_font_file = strdup(optarg);
         break;
 
         case 'g':
@@ -282,10 +339,6 @@ int main(int argc, char *argv[]) {
 
         case 's':
         shake = atoi(optarg);
-        break;
-
-        case 'e':
-        bounce = atoi(optarg);
         break;
 
         // These used to be options we understood, but deprecated now. Accept
@@ -334,6 +387,39 @@ int main(int argc, char *argv[]) {
         }
     }
 
+    for (int i = optind; i < argc; ++i) {
+        line.append(argv[i]).append(" ");
+    }
+
+    if (line.empty()) {
+        fprintf(stderr, "Add the text you want to print on the command-line.\n");
+        return usage(argv[0]);
+    }
+
+
+    if (bdf_font_file == NULL) {
+        fprintf(stderr, "Need to specify BDF font-file with -f\n");
+        return usage(argv[0]);
+    }
+
+    /*
+    * Load font. This needs to be a filename with a bdf bitmap font.
+    */
+    rgb_matrix::Font font;
+    if (!font.LoadFont(bdf_font_file)) {
+        fprintf(stderr, "Couldn't load font '%s'\n", bdf_font_file);
+        return 1;
+    }
+
+    /*
+    * If we want an outline around the font, we create a new font with
+    * the original font as a template that is just an outline font.
+    */
+    rgb_matrix::Font *outline_font = NULL;
+    if (with_outline) {
+        outline_font = font.CreateOutlineFont();
+    }
+
     RGBMatrix *matrix = CreateMatrixFromOptions(matrix_options, runtime_opt);
     if (matrix == NULL)
         return 1;
@@ -346,7 +432,7 @@ int main(int argc, char *argv[]) {
     // The ThreadedCanvasManipulator objects are filling
     // the matrix continuously.
     ThreadedCanvasManipulator *image_gen = NULL;
-    image_gen = new Animation(canvas, canvas->width(), canvas->height(), scroll_ms, accel, shake, numGrains, bounce);
+    image_gen = new Animation(canvas, canvas->width(), canvas->height(), scroll_ms, accel, shake, bounce, font, line);
 
     // Set up an interrupt handler to be able to stop animations while they go
     // on. Note, each demo tests for while (running() && !interrupt_received) {},

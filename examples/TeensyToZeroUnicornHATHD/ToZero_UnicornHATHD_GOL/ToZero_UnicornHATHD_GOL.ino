@@ -32,7 +32,7 @@
 class Animation : public RGBMatrixRenderer {
     public:
         Animation(uint16_t width, uint16_t height, uint16_t delay_ms, uint8_t fade_steps)
-            : RGBMatrixRenderer{width,height}, animGOL(*this,fade_steps,delay_ms)
+            : RGBMatrixRenderer{width,height}, animGOL(*this,fade_steps,delay_ms,0)
         {}
 
         virtual ~Animation(){}

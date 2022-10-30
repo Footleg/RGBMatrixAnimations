@@ -6,7 +6,7 @@
  * rendering is passed in, so it can be used with any RGB array display by writing an 
  * implementation of a renderer class to set pixels/LED colours on the hardware.
  *
- * Copyright (C) 2020 Paul Fretwell - aka 'Footleg'
+ * Copyright (C) 2022 Paul Fretwell - aka 'Footleg'
  * 
  * This is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -39,16 +39,16 @@ class Crawler
     protected:
     private:
         RGBMatrixRenderer &renderer;
-        uint16_t x;
-        uint16_t y;
-        int8_t direction;
+        MovingPixel leadPixel;
         uint16_t colChg = 0;
-        uint16_t dirChg = 0;
-        uint16_t dirChgCount = 50;
+        uint16_t dirChg;
+        uint16_t colChgCount = 50;
+        uint16_t dirChgCount = 1;
         RGB_colour colour;
+        bool anyAngle;
     //functions
     public:
-        Crawler(RGBMatrixRenderer&,uint16_t);
+        Crawler(RGBMatrixRenderer&,uint16_t,uint16_t,bool=false);
         ~Crawler();
         void runCycle();
     protected:

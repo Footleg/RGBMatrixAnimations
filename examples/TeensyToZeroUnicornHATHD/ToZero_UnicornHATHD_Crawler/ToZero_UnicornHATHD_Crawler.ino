@@ -32,7 +32,7 @@
 class Animation : public RGBMatrixRenderer {
     public:
         Animation(uint16_t width, uint16_t height, uint16_t steps)
-            : RGBMatrixRenderer{width,height}, animCrawler(*this, steps)
+            : RGBMatrixRenderer{width,height}, animCrawler(*this, steps,4)
         {
             //No setup needed for this simple example
         }
