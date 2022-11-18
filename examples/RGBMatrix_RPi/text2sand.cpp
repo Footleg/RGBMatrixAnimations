@@ -282,6 +282,7 @@ static int usage(const char *progname) {
             "\t-m <msecs>     : Milliseconds pause between updates.\n"
             "\t-t <seconds>   : Run for these number of seconds, then exit.\n"
             "\t-g <number>    : Gravity force (0-100 is sensible, but takes higher).\n"
+            "\t-e <number>    : Bounce energy (0-255). Max 255 means no loss of energy.\n"
             "\t-s <number>    : Random shake force (0-100 is sensible, but takes higher).\n");
 
     rgb_matrix::PrintMatrixFlags(stderr);
@@ -297,7 +298,7 @@ int main(int argc, char *argv[]) {
     int scroll_ms = 10;
     int accel = 10;
     int shake = 0;
-    int bounce = 0;
+    uint8_t bounce = 0;
     const char *bdf_font_file = NULL;
     bool with_outline = false;
     std::string line;
@@ -319,7 +320,7 @@ int main(int argc, char *argv[]) {
     }
 
     int opt;
-    while ((opt = getopt(argc, argv, "dD:t:m:r:P:f:s:c:g:p:b:LR:")) != -1) {
+    while ((opt = getopt(argc, argv, "dD:t:m:r:P:f:s:e:c:g:p:b:LR:")) != -1) {
         switch (opt) {
         case 't':
         runtime_seconds = atoi(optarg);
@@ -335,6 +336,10 @@ int main(int argc, char *argv[]) {
 
         case 'g':
         accel = atoi(optarg);
+        break;
+
+        case 'e':
+        bounce = atoi(optarg);
         break;
 
         case 's':
