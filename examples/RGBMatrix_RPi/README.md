@@ -28,9 +28,13 @@ The other examples also explain their own command line options (if you enter -h,
 ```bash
 sudo ./gol --led-slowdown-gpio=4
 ```
-Try Falling Sand:
+Falling Sand uses the gravity particles to simulate grains of sand pouring over objects:
 ```bash
 sudo ./sand --led-slowdown-gpio=4 -n 200 -g 50 -s 10
+```
+Rain uses the gravity particles with different configuration options to create a rain effect:
+```bash
+sudo ./rain --led-slowdown-gpio=4
 ```
 Sparks uses the gravity particles with different configuration options to create high energy bouncy sparks:
 ```bash
