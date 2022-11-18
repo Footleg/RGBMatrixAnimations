@@ -50,8 +50,8 @@ uint64_t micros()
     return us; 
 }
 
-// RGB Matrix class which pass itself as a renderer implementation into the GOL class
-// Passing as a reference into gol class, so need to dereference 'this' which is a pointer
+// RGB Matrix class which passes itself as a renderer implementation into the Gravity Particles class
+// Passing as a reference into the animation class, so need to dereference 'this' which is a pointer
 // using the syntax *this
 class Animation : public ThreadedCanvasManipulator, public RGBMatrixRenderer {
     public:
@@ -122,9 +122,6 @@ class Animation : public ThreadedCanvasManipulator, public RGBMatrixRenderer {
                 //fprintf(stderr,"Cycle time: %d\n", t );
                 prevTime = micros();
 
-                // //Reset cycles before acceleration is changed based on speed of update
-                // cycles = 3000000 / t;
-                // if (accel < 5) cycles = 2*cycles;
             }
         }
 
@@ -165,14 +162,14 @@ static int usage(const char *progname) {
     fprintf(stderr,
             "\t-m <msecs>     : Milliseconds pause between updates.\n"
             "\t-t <seconds>   : Run for these number of seconds, then exit.\n"
-            "\t-n <number>    : Number of random grains of sand in addition to square blocks.\n"
+            "\t-n <number>    : Number of spark particles.\n"
             "\t-g <number>    : Gravity force (0-100 is sensible, but takes higher).\n"
             "\t-s <number>    : Random shake force (0-100 is sensible, but takes higher).\n"
             "\t-e <number>    : Bounce energy (0-255). Max 255 means no loss of energy.\n");
 
     rgb_matrix::PrintMatrixFlags(stderr);
 
-    fprintf(stderr, "Example:\n\t%s -n 64 -g 10 -s 5 -t 10 \n"
+    fprintf(stderr, "Example:\n\t%s -n 64 -g 10 -s 5 -e 200 -t 10 \n"
             "Runs demo for 10 seconds\n", progname);
     return 1;
 }
@@ -181,10 +178,10 @@ static int usage(const char *progname) {
 int main(int argc, char *argv[]) {
     int runtime_seconds = -1;
     int scroll_ms = 10;
-    int accel = 50;
-    int shake = 10;
-    int numParticles = 4;
-    uint8_t bounce = 200;
+    int accel = 1;
+    int shake = 5;
+    int numParticles = 40;
+    uint8_t bounce = 250;
 
     srand(time(NULL));
  
