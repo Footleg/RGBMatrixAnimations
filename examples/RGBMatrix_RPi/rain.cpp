@@ -92,7 +92,7 @@ class Animation : public ThreadedCanvasManipulator, public RGBMatrixRenderer {
             //Set initial column configurations
             for (uint16_t x=0; x<totalCols; ++x) {
                 cols[x] = gridWidth; //Initialise to off grid
-                vels[x] = velocity;
+                vels[x] = random_int16(velocity/4,velocity);
                 lengths[x] = 0;
             }
 
@@ -125,8 +125,35 @@ class Animation : public ThreadedCanvasManipulator, public RGBMatrixRenderer {
                 //Red to magenta
                 for (uint8_t j = 0; j < shadeSize; j++){
                     brightness = random_int16(50,255);
+                    red = brightness;
+                    blue = uint16_t(brightness * i / 255);
+                    colID = getColourId(RGB_colour(red,green,blue));
+                }
+            }
+            for (uint16_t i = 0; i <= 255; i++){
+                //Magenta to blue
+                for (uint8_t j = 0; j < shadeSize; j++){
+                    brightness = random_int16(50,255);
                     red = uint16_t(brightness * (255-i) / 255);
                     blue = brightness;
+                    colID = getColourId(RGB_colour(red,green,blue));
+                }
+            }
+            for (uint16_t i = 0; i <= 255; i++){
+                //Blue to cyan
+                for (uint8_t j = 0; j < shadeSize; j++){
+                    brightness = random_int16(50,255);
+                    green = uint16_t(brightness * i / 255);
+                    blue = brightness;
+                    colID = getColourId(RGB_colour(red,green,blue));
+                }
+            }
+            for (uint16_t i = 0; i <= 255; i++){
+                //Cyan to green
+                for (uint8_t j = 0; j < shadeSize; j++){
+                    brightness = random_int16(50,255);
+                    green = brightness;
+                    blue = uint16_t(brightness * (255-i) / 255);
                     colID = getColourId(RGB_colour(red,green,blue));
                 }
             }
@@ -157,25 +184,21 @@ class Animation : public ThreadedCanvasManipulator, public RGBMatrixRenderer {
                             }
                             cols[i] = newPos;
                             lengths[i] = random_int16(8,24);
-                            vels[i] = random_int16(velocity/16,velocity);
+                            vels[i] = random_int16(velocity/4,velocity);
                         }
                         //Check position is clear on top row
                         uint8_t tries = 0;
                         while (tries < 1) {
                             //Add particle if free position was found
                             if ( (getPixelValue((gridHeight-1) * gridWidth + cols[i])) == false ) {
-                                // //Set random brightness
-                                // uint16_t brightness = random_int16(50,255);
-                                // uint8_t red = uint16_t(brightness * colourRatio / 255);
-                                // uint8_t green = uint16_t(brightness * (255-colourRatio-blue) / 255);
-                                // uint16_t colID = getColourId(RGB_colour(red,green,blue));
+                                //Cycle colour every time counter rolls over
                                 if (counter == 0) colID++;
                                 if (colID >= totalColours) colID = 1;
                                 RGB_colour actualCol = getColour(colID);
                                 animation.addParticle(cols[i], gridHeight-1, actualCol, 0, -vels[i] );
                                 lengths[i]--;
                                 tries = 255;
-                                fprintf(stderr, "New particle added. Brightness %d, ColourID %d, Actual %d,%d,%d.\n",brightness,colID,actualCol.r,actualCol.g,actualCol.b);
+                                //fprintf(stderr, "New particle added. Brightness %d, ColourID %d, Actual %d,%d,%d.\n",brightness,colID,actualCol.r,actualCol.g,actualCol.b);
                             }
                             else {
                                 tries++;
