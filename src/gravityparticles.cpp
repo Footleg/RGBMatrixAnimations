@@ -36,7 +36,7 @@
 #include "gravityparticles.h"  
 
 // default constructor
-GravityParticles::GravityParticles(RGBMatrixRenderer &renderer_, uint16_t shake_, uint8_t bounce)
+GravityParticles::GravityParticles(RGBMatrixRenderer &renderer_, uint16_t shake_, uint8_t bounce_)
     : renderer(renderer_)
 {
     //Normally the particle coordinate space is 256x the pixel resolution of the pixel matrix
@@ -74,11 +74,12 @@ GravityParticles::GravityParticles(RGBMatrixRenderer &renderer_, uint16_t shake_
 
     numParticles = 0;
     shake = shake_;
+    bounce = bounce_;
     accelX = 0;
     accelY = 0;
 
     //Loss should be between 1 - 6. If should not be < 1 and particles will gain energy from collisions then
-    loss = 1.0+float_t(255-bounce)*5/255;    
+    loss = 1.0+float_t(255-bounce_)*5/255;    
 
     char msg[64];
     sprintf(msg, "Particle coordinates space multipler = %d, Loss=%.2f, b=%d\n", spaceMultiplier, loss, bounce );
@@ -100,7 +101,7 @@ void GravityParticles::runCycle()
     int16_t shakeFactor = shake / 2;
 
     //Apply 2D accel vector to particle velocities...
-    for(int16_t i=0; i<numParticles; i++) {
+    for(uint16_t i=0; i<numParticles; i++) {
         int16_t axa = accelX + renderer.random_int16(-shakeFactor,shakeFactor+1); // A little randomness makes
         int16_t aya = accelY + renderer.random_int16(-shakeFactor,shakeFactor+1); // tall stacks topple better!
         particles[i].vx += axa;
@@ -145,17 +146,43 @@ void GravityParticles::runCycle()
         newy = particles[i].y + over + (particles[i].vy/velDiv);
         if(newx > maxX + over) {         // If particle would go out of bounds
             newx = maxX + over;          // keep it inside, and
-            particles[i].vx /= -loss;   // give a slight bounce off the wall
+            if ( bounce > 0 ) {
+                particles[i].vx /= -loss;   // give a slight bounce off the wall
+            }
+            else {
+                particles[i].vx = 0;        // Stop it dead if no bounce
+            }
         } else if(newx < over) {
             newx = over;
-            particles[i].vx /= -loss;
+            if ( bounce > 0 ) {
+                particles[i].vx /= -loss;   // give a slight bounce off the wall
+            }
+            else {
+                particles[i].vx = 0;        // Stop it dead if no bounce
+            }
         }
         if(newy > maxY + over) {
             newy = maxY + over;
-            particles[i].vy /= -loss;
+            if ( bounce > 0 ) {
+                particles[i].vy /= -loss;   // give a slight bounce off the wall
+            }
+            else {
+                particles[i].vy = 0;        // Stop it dead if no bounce
+            }
         } else if(newy < over) {
             newy = over;
-            particles[i].vy /= -loss;
+            if ( bounce > 0 ) {
+                particles[i].vy /= -loss;   // give a slight bounce off the wall
+                // char msg[100];
+                // sprintf(msg, "Particle %d: vy %d  bounce %d)\n", i, particles[i].vy, bounce );
+                // renderer.outputMessage(msg);
+            }
+            else {
+                particles[i].vy = 0;        // Stop it dead if no bounce
+                // char msg[100];
+                // sprintf(msg, "Particle %d: vy %d  bounce %d)\n", i, particles[i].vy, bounce );
+                // renderer.outputMessage(msg);
+            }
         }
         //Remove overshoot buffer
         newx -= over;
@@ -228,7 +255,7 @@ void GravityParticles::runCycle()
         
 		//Update matrix memory and display state (before changing particle position as we need old position
         if (oldidx != newidx) {
-            uint8_t colcode = renderer.getPixelValue(oldidx);
+            uint16_t colcode = renderer.getPixelValue(oldidx);
             renderer.setPixelValue(oldidx, 0);       // Clear old spot
             renderer.setPixelValue(newidx, colcode); // Set new spot
             renderer.setPixelInstant(particles[i].x/spaceMultiplier,particles[i].y/spaceMultiplier, renderer.getColour(0) );       //Update on screen
@@ -359,6 +386,43 @@ void GravityParticles::addParticle(uint16_t x, uint16_t y, RGB_colour colour, in
 // sprintf(msg, "Particle placed %d,%d (%d,%d) vel: %d,%d colour:%d; Total:%d\n", x,y, int(particles[i].x),int(particles[i].y), vx,vy, renderer.getColourId(colour), numParticles );
 // renderer.outputMessage(msg);
 
+}
+
+GravityParticles::Particle GravityParticles::deleteParticle(uint16_t index)
+{
+    Particle particle;
+    particle.x = particles[index].x;
+    particle.y = particles[index].y;
+    particle.vx = particles[index].vx;
+    particle.vy = particles[index].vy;
+
+    //Move all particles from specified index to end of array down one position
+    for(uint16_t i=index; i<numParticles-1; i++) {
+        particles[i].x = particles[i+1].x;
+        particles[i].y = particles[i+1].y;
+        particles[i].vx = particles[i+1].vx;
+        particles[i].vy = particles[i+1].vy;
+    }
+    numParticles--;
+
+    //Delete pixel where old particle was
+    renderer.setPixelValue( (particle.y / spaceMultiplier) * renderer.getGridWidth() + (particle.x / spaceMultiplier), 0 ); // Mark it
+    renderer.setPixelInstant(particle.x/spaceMultiplier,particle.y/spaceMultiplier, renderer.getColour(0) );
+
+    return particle;
+}
+
+GravityParticles::Particle GravityParticles::getParticle(uint16_t index)
+{
+    Particle particle;
+
+    //Convert position back into pixel coordinates
+    particle.x = particles[index].x/spaceMultiplier;
+    particle.y = particles[index].y/spaceMultiplier;
+    particle.vx = particles[index].vx;
+    particle.vy = particles[index].vy;
+
+    return particle;
 }
 
 uint16_t GravityParticles::getParticleCount()

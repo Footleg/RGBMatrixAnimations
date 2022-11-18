@@ -53,15 +53,14 @@ class GravityParticles
 {
     //variables
     public:
-    protected:
-    private:
-        int delayms;
-        RGBMatrixRenderer &renderer;
-
         struct Particle {
             uint16_t  x,  y; // Position
             int16_t vx, vy; // Velocity
         };
+    protected:
+    private:
+        int delayms;
+        RGBMatrixRenderer &renderer;
         Particle* particles;
         uint16_t spaceMultiplier;
         uint16_t maxParticles;
@@ -74,6 +73,7 @@ class GravityParticles
         uint16_t shake;
         uint16_t velCap;
         float_t loss;
+        uint8_t bounce;
     //functions
     public:
         GravityParticles(RGBMatrixRenderer&,uint16_t,uint8_t=10);
@@ -83,6 +83,8 @@ class GravityParticles
         void setAcceleration(int16_t,int16_t,int16_t);
         void addParticle(RGB_colour,int16_t=0,int16_t=0);
         void addParticle(uint16_t,uint16_t,RGB_colour,int16_t=0,int16_t=0);
+        Particle deleteParticle(uint16_t);
+        Particle getParticle(uint16_t);
         void clearParticles();
         uint16_t getParticleCount();
         void imgToParticles();
