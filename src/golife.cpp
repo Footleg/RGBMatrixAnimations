@@ -648,56 +648,51 @@ void GameOfLife::fadeInChanges(uint8_t step)
     uint8_t halfSteps = fadeSteps / 2; 
     RGB_colour born;
     RGB_colour died;
-    uint16_t fadeDelay = delayms;
     uint16_t maxBrightness = (uint16_t)(cellColour.r + cellColour.g + cellColour.b)/2;
     if (maxBrightness > 255) maxBrightness = 255;
+    uint8_t max8bit = (uint8_t)(maxBrightness);
 
-    // for(uint8_t i = 1; i < fadeSteps+1; ++i)
-    // {
-        if (step <= halfSteps)
+    if (step <= halfSteps)
+    {
+        //Set fade from black to green for cells being born
+        born = renderer.blendColour(RGB_colour{0,0,0}, RGB_colour{0,max8bit,0}, step, halfSteps);
+        //Set fade cells dying out from current colour to red
+        died = renderer.blendColour(cellColour, RGB_colour{max8bit,0,0}, step, halfSteps);
+    }
+    else
+    {
+        //Set fade from green to active cell colour for cells being born
+        born = renderer.blendColour(RGB_colour{0,max8bit,0}, cellColour, step-halfSteps, fadeSteps-halfSteps);
+        //Set fade colour for cells dying out from red to black
+        died = renderer.blendColour(RGB_colour{max8bit,0,0}, RGB_colour{0,0,0}, step-halfSteps, fadeSteps-halfSteps);
+    }
+    
+    for(uint16_t y = 0; y < renderer.getGridHeight(); ++y)
+    {
+        for(uint16_t x = 0; x < renderer.getGridWidth(); ++x)
         {
-            //Set fade from black to green for cells being born
-            born = renderer.blendColour(RGB_colour{0,0,0}, RGB_colour{0,maxBrightness,0}, step, halfSteps);
-            //Set fade cells dying out from current colour to red
-            died = renderer.blendColour(cellColour, RGB_colour{maxBrightness,0,0}, step, halfSteps);
-        }
-        else
-        {
-            //Set fade from green to active cell colour for cells being born
-            born = renderer.blendColour(RGB_colour{0,maxBrightness,0}, cellColour, step-halfSteps, fadeSteps-halfSteps);
-            //Set fade colour for cells dying out from red to black
-            died = renderer.blendColour(RGB_colour{maxBrightness,0,0}, RGB_colour{0,0,0}, step-halfSteps, fadeSteps-halfSteps);
-        }
-        
-        for(uint16_t y = 0; y < renderer.getGridHeight(); ++y)
-        {
-            for(uint16_t x = 0; x < renderer.getGridWidth(); ++x)
+            if ((cells[x][y] & CELL_BIRTH) != 0)
             {
-                if ((cells[x][y] & CELL_BIRTH) != 0)
-                {
-                    renderer.setPixelInstant(x, y, born);
-                }
-                else if ((cells[x][y] & CELL_DEATH) != 0)
-                {
-                    renderer.setPixelInstant(x, y, died);
-                }
-                else if ((cells[x][y] & CELL_ALIVE) != 0)
-                {
-                    renderer.setPixelInstant(x, y, cellColour);
-                    //renderer.setPixelInstant(x, y, RGB_colour{192,192,192});
-                }
+                renderer.setPixelInstant(x, y, born);
+            }
+            else if ((cells[x][y] & CELL_DEATH) != 0)
+            {
+                renderer.setPixelInstant(x, y, died);
+            }
+            else if ((cells[x][y] & CELL_ALIVE) != 0)
+            {
+                renderer.setPixelInstant(x, y, cellColour);
+                //renderer.setPixelInstant(x, y, RGB_colour{192,192,192});
             }
         }
+    }
 /*
 char msg[100];
 sprintf(msg, "Born col: %d,%d,%d Dead col: %d,%d,%d\n", born.r, born.g, born.b, died.r, died.g, died.b );
 renderer.outputMessage(msg);
 */      
-        //if (delayms * fadeSteps > 1000) fadeDelay = 1000 / fadeSteps;
 
-        renderer.showPixels();
-        // renderer.msSleep(fadeDelay);
-    // }
+    renderer.showPixels();
 }
 
 bool GameOfLife::getCellState(uint16_t x, uint16_t y)
