@@ -44,3 +44,7 @@ Text2Sand shows how pixels rended onto the display can be converted into particl
 ```bash
 sudo ./text2sand --led-slowdown-gpio=4 -f ../../../fonts/8x13.bdf -g 10 -s 5 -t 10 Hello
 ```
+Balls uses the gravity simulation animation class to create gravitational simulations in 2D:
+```bash
+sudo ./balls --led-slowdown-gpio=4 -n 5 -f 8 -s 6
+```
