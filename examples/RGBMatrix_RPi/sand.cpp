@@ -188,19 +188,19 @@ class Animation : public ThreadedCanvasManipulator, public RGBMatrixRenderer {
             }
         }
 
-        virtual void showPixels() {
+        void showPixels() {
             //Nothing to do for RGB matrix type displays as pixel changes are shown immediately
         }
 
-        virtual void outputMessage(char msg[]) {
+        void outputMessage(char msg[]) {
             fprintf(stderr,msg);
         }
         
-        virtual void msSleep(int delay_ms) {
+        void msSleep(int delay_ms) {
             usleep(delay_ms * 1000);
         }
 
-        virtual int16_t random_int16(int16_t a, int16_t b) {
+        int16_t random_int16(int16_t a, int16_t b) {
             return a + rand()%(b-a);
         }
 
@@ -211,7 +211,7 @@ class Animation : public ThreadedCanvasManipulator, public RGBMatrixRenderer {
         uint16_t numGrains;
         uint32_t counter, cycles;
 
-        virtual void setPixel(uint16_t x, uint16_t y, RGB_colour colour) 
+        void setPixel(uint16_t x, uint16_t y, RGB_colour colour) 
         {
             canvas()->SetPixel(x, gridHeight - y - 1, colour.r, colour.g, colour.b);
         }

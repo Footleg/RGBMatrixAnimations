@@ -157,7 +157,6 @@ class Animation : public ThreadedCanvasManipulator, public RGBMatrixRenderer {
             counter = 0;
             uint64_t prevTime = micros();
             uint64_t prevTime2 = micros();
-            int length = 0;
 
             //Draw text on canvas
             Color color(200, 46, 140);
@@ -165,7 +164,7 @@ class Animation : public ThreadedCanvasManipulator, public RGBMatrixRenderer {
             // length = holds how many pixels our text takes up
             ReadableCanvas *cvs = NULL;
             cvs = new ReadableCanvas(gridWidth, gridHeight);
-            length = rgb_matrix::DrawText(cvs, font, 12, 12 + font.baseline(),
+            int length = rgb_matrix::DrawText(cvs, font, 12, 12 + font.baseline(),
                         color, NULL,
                         textline.c_str(), 0);
 
@@ -241,19 +240,19 @@ class Animation : public ThreadedCanvasManipulator, public RGBMatrixRenderer {
             }
         }
 
-        virtual void showPixels() {
+        void showPixels() {
             //Nothing to do for RGB matrix type displays as pixel changes are shown immediately
         }
 
-        virtual void outputMessage(char msg[]) {
+        void outputMessage(char msg[]) {
             fprintf(stderr,msg);
         }
         
-        virtual void msSleep(int delay_ms) {
+        void msSleep(int delay_ms) {
             usleep(delay_ms * 1000);
         }
 
-        virtual int16_t random_int16(int16_t a, int16_t b) {
+        int16_t random_int16(int16_t a, int16_t b) {
             return a + rand()%(b-a);
         }
 
@@ -266,7 +265,7 @@ class Animation : public ThreadedCanvasManipulator, public RGBMatrixRenderer {
         rgb_matrix::Font font;
         std::string textline;
 
-        virtual void setPixel(uint16_t x, uint16_t y, RGB_colour colour) 
+        void setPixel(uint16_t x, uint16_t y, RGB_colour colour) 
         {
             canvas()->SetPixel(x, gridHeight - y - 1, colour.r, colour.g, colour.b);
         }
@@ -420,10 +419,10 @@ int main(int argc, char *argv[]) {
     * If we want an outline around the font, we create a new font with
     * the original font as a template that is just an outline font.
     */
-    rgb_matrix::Font *outline_font = NULL;
-    if (with_outline) {
-        outline_font = font.CreateOutlineFont();
-    }
+    // rgb_matrix::Font *outline_font = NULL;
+    // if (with_outline) {
+    //     outline_font = font.CreateOutlineFont();
+    // }
 
     RGBMatrix *matrix = CreateMatrixFromOptions(matrix_options, runtime_opt);
     if (matrix == NULL)
