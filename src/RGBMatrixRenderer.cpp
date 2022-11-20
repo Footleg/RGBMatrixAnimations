@@ -575,11 +575,11 @@ uint16_t RGBMatrixRenderer::getColourId(RGB_colour colour)
     //Search palette for matching colour (black is always zero)
     if ( (colour.r !=0) || (colour.g !=0) || (colour.b !=0) ) {
         for (uint16_t i=1; i<=coloursDefined; i++) {
-/*
-char msg1[64];
-sprintf(msg1, "Searching palette %d (size %d))\n", i, coloursDefined);
-outputMessage(msg1);
-*/
+
+// char msg1[64];
+// sprintf(msg1, "Searching palette %d (size %d))\n", i, coloursDefined);
+// outputMessage(msg1);
+
             if ( (palette[i].r == colour.r)
             && (palette[i].g == colour.g) 
             && (palette[i].b == colour.b) ) {
@@ -602,11 +602,11 @@ outputMessage(msg1);
         if (id == 0) {
             if (coloursDefined < maxColours-1) {
                 coloursDefined++;
-/*                
-char msg2[64];
-sprintf(msg2, "Adding colour: %d, %d, %d (Total: %d)\n", colour.r,  colour.g, colour.b, coloursDefined);
-outputMessage(msg2);
-*/
+                
+// char msg2[64];
+// sprintf(msg2, "Adding colour: %d, %d, %d (Total: %d)\n", colour.r,  colour.g, colour.b, coloursDefined);
+// outputMessage(msg2);
+
                 palette[coloursDefined] = colour;
                 id = coloursDefined;
             }
@@ -619,13 +619,13 @@ outputMessage(msg3);
             }
         }
     }
-/*
-if (id > 0) {
-char msg[64];
-sprintf(msg, "Returned colour at index: %d\n", id);
-outputMessage(msg);   
-}
-*/
+
+// if (id > 0) {
+//     char msg[64];
+//     sprintf(msg, "Returned colour at index: %d\n", id);
+//     outputMessage(msg);   
+// }
+
     return id;
 }
 
@@ -696,4 +696,82 @@ void RGBMatrixRenderer::setPixelColour(uint16_t x, uint16_t y, RGB_colour colour
 void RGBMatrixRenderer::setPixelInstant(uint16_t x, uint16_t y, RGB_colour colour)
 {
     setPixel(x,y,colour);
+}
+
+void RGBMatrixRenderer::drawOctants(int xc, int yc, int x, int y, int yPrev, RGB_colour colour, bool solid)
+{
+    if (x > 0) {
+        if (y == yPrev || solid == false) {
+            setPixelInstant(xc+x, yc+y, colour);
+            setPixelInstant(xc-x, yc+y, colour);
+            setPixelInstant(xc+x, yc-y, colour);
+            setPixelInstant(xc-x, yc-y, colour);
+            if (solid) {
+                for (int lineX = xc-y; lineX <= xc+y; lineX++){
+                    setPixelInstant(lineX, yc+x, colour);
+                    setPixelInstant(lineX, yc-x, colour);
+                }
+            }
+            else {
+                setPixelInstant(xc+y, yc+x, colour);
+                setPixelInstant(xc-y, yc+x, colour);
+                setPixelInstant(xc+y, yc-x, colour);
+                setPixelInstant(xc-y, yc-x, colour);
+            }
+        }
+        else {
+            //Inner most pixels of horizontal section, so fill all postions in x range
+            for (int lineX = xc-x; lineX <= xc+x; lineX++){
+                setPixelInstant(lineX, yc+y, colour);
+                setPixelInstant(lineX, yc-y, colour);
+            }
+            if (solid) {
+                //Middle of circle horizontal lines for every line
+                for (int lineX = xc-y; lineX <= xc+y; lineX++){
+                    setPixelInstant(lineX, yc+x, colour);
+                    setPixelInstant(lineX, yc-x, colour);
+                }
+            }
+        }
+    }
+    else {
+        setPixelInstant(xc, yc+y, colour);
+        setPixelInstant(xc, yc-y, colour);
+        if (solid) {
+            for (int lineX = xc-y; lineX <= xc+y; lineX++){
+                setPixelInstant(lineX, yc, colour);
+            }
+        }
+        else {
+            setPixelInstant(xc-y, yc, colour);
+            setPixelInstant(xc+y, yc, colour);
+        }
+    }
+}
+ 
+// Function for circle-generation
+// using Bresenham's algorithm
+void RGBMatrixRenderer::drawCircle(int xc, int yc, int radius, RGB_colour colour, bool solid)
+{
+    int r = radius;
+    int x = 0, y = r, yPrev = y;
+    int d = 3 - 2 * r;
+    //Draw the 4 pixels marking the top, bottom, left and right most points in the circle
+    drawOctants(xc, yc, x, y, yPrev, colour, solid);
+    //Now draw the positions either side of the last points drawn and continue moving
+    //around the circumference drawing 8 pixels each step
+    while (y >= x) {
+        x++;
+        // check for decision parameter
+        // and correspondingly
+        // update d, x, y
+        if (d > 0) {
+            y--;
+            d = d + 4 * (x - y) + 10;
+        }
+        else
+            d = d + 4 * x + 6;
+        drawOctants(xc, yc, x, y, yPrev, colour, solid);
+        yPrev = y;
+    }
 }
