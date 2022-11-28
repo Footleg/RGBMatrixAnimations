@@ -47,19 +47,21 @@ class GameOfLife
     private:
         static uint8_t const maxRepeatCycle = 24;
         static uint8_t const popHistorySize = 48;
-        static uint8_t const CELL_ALIVE = 0x01;
-        static uint8_t const CELL_PREV1 = 0x02;
-        static uint8_t const CELL_PREV2 = 0x04;
-        static uint8_t const CELL_PREV3 = 0x08;
-        static uint8_t const CELL_BIRTH = 0x10;
-        static uint8_t const CELL_DEATH = 0x20;
+        static uint8_t const CELL_ALIVE = 0b00000001;
+        static uint8_t const CELL_CHANGE = 0b00000010;
+        static uint8_t const CELL_PREV1 = 0b00000100;
+        static uint8_t const CELL_PREV2 = 0b00001000;
+        static uint8_t const CELL_PREV3 = 0b00010000;
+        //static uint8_t const CELL_COL1 = 0b00100000;
+        RGB_colour* cellColours;
         uint16_t delayms;
-        RGB_colour cellColour;
         uint8_t fadeSteps;
         uint8_t fadeStep = 1;
         uint8_t startPattern = 0;
+        uint8_t patternRepeatX = 1;
+        uint8_t patternRepeatY = 1;
         RGBMatrixRenderer &renderer;
-        uint8_t** cells; //8bits representing [null,null,deaths,births,prev3,prev2,prev1,alive]
+        uint8_t** cells; //8bits representing [colour3,colour2,colour1,prev3,prev2,prev1,birth/death,alive]
         uint16_t alive = 0;
         uint16_t population[popHistorySize] = {};
         uint8_t popCursor = popHistorySize - 1; //Set to last position as gets incremented before use
@@ -75,13 +77,13 @@ class GameOfLife
         bool fadeOn;
     //functions
     public:
-        GameOfLife(RGBMatrixRenderer&,uint8_t,uint16_t,uint8_t);
+        GameOfLife(RGBMatrixRenderer&,uint8_t,uint16_t,uint8_t,uint8_t=1,uint8_t=1);
         ~GameOfLife();
         void runCycle();
         void restart();
         bool getCellState(uint16_t,uint16_t);
         void setStartPattern(uint8_t);
-        RGB_colour getCellColour();
+        RGB_colour getCellColour(uint8_t);
     protected:
     private:
         void initialiseGrid(uint8_t);

@@ -32,7 +32,7 @@
 #include "golife.h"
 
 // default constructor
-GameOfLife::GameOfLife(RGBMatrixRenderer &renderer_, uint8_t fadeSteps_, uint16_t delay_, uint8_t startPattern_)
+GameOfLife::GameOfLife(RGBMatrixRenderer &renderer_, uint8_t fadeSteps_, uint16_t delay_, uint8_t startPattern_, uint8_t patternRepeatX_, uint8_t patternRepeatY_)
     : renderer(renderer_)
 {
     // Allocate memory
@@ -48,6 +48,22 @@ GameOfLife::GameOfLife(RGBMatrixRenderer &renderer_, uint8_t fadeSteps_, uint16_
     startOver = true;
     fadeOn = false;
     startPattern = startPattern_;
+    
+    if (patternRepeatX_ < 1) {
+        patternRepeatX = 1;
+    }
+    else {
+        patternRepeatX = patternRepeatX_;
+    }
+    if (patternRepeatY_ < 1) {
+        patternRepeatY = 1;
+    }
+    else {
+        patternRepeatY = patternRepeatY_;
+    }
+
+    cellColours = new RGB_colour[8];
+
 
     panelSize = renderer.getGridHeight();
     if (renderer.getGridWidth() < panelSize)
@@ -62,6 +78,7 @@ GameOfLife::~GameOfLife()
         delete [] cells[x];
     }
     delete [] cells;
+    delete [] cellColours;
 } //~GameOfLife
 
 void GameOfLife::runCycle()
@@ -167,6 +184,7 @@ void GameOfLife::runCycle()
             {
                 //For each cell, count neighbours, including wrapping over grid edges
                 neighbours = -1;
+                uint8_t scores[8] = {0,0,0,0,0,0,0,0}; //To count colours of surrounding cells to decide colour of new cell
                 for(xi = -1; xi < 2; ++xi)
                 {
                     xt = renderer.newPositionX(x, xi);
@@ -176,28 +194,59 @@ void GameOfLife::runCycle()
                         if ( (cells[xt][yt] & CELL_ALIVE) != 0 )
                         {
                             ++neighbours;
+                            uint8_t colIdx = cells[xt][yt] >> 5;
+                            scores[colIdx]++;
                         }
                     }
                 }
 
-                //Reset changes arrays for this cell
-                cells[x][y] &= ~CELL_BIRTH;
-                cells[x][y] &= ~CELL_DEATH;
+                /* 
+                    00: Cell is empty (free space) and staying that way
+                    01: Cell is alive and surviving the next cycle
+                    11: Cell is alive but is dying (counts as populated for this cycle but will be kills at end of cycle)
+                    10: Cell is empty, but is going to spawn a new cell on the next cycle
+                */
+                //Initialise this cell change state to false
+                cells[x][y] &= ~CELL_CHANGE;
                 if ( ((cells[x][y] & CELL_ALIVE) != 0) && (neighbours < 2) )
                 {
                     //Populated cell with too few neighbours, so it will die
-                    cells[x][y] |= CELL_DEATH; //turn on kill bit
+                    cells[x][y] |= CELL_CHANGE; //turn on change bit
 
                 }
                 else if ( ((cells[x][y] & CELL_ALIVE) == 0) && (neighbours == 2) ) 
                 {
-                    //Empty cell with exactly 3 neighbours (count = 2 as did not count itself so was initialised as -1)
-                    cells[x][y] |= CELL_BIRTH; //turn on spawn bit
+                    //Empty cell with exactly 3 neighbours (count = 2 as did not count itself so was initialised as -1), so spawn new cell
+                    cells[x][y] |= CELL_CHANGE; //turn on change bit
+                    //Determine highest scoring colour from neighbours
+                    uint8_t maxScore = 0;
+                    uint8_t newCol = 0;
+                    for(uint8_t i = 0; i < 8; ++i) {
+                        if (scores[i] > maxScore) {
+                            maxScore = scores[i];
+                            newCol = i;
+                        }
+                    }
+
+                    //Set new cell colour
+                    cells[x][y] &= ~0b11100000;//Clear all colour bits
+                    //Apply new colour bit values
+                    cells[x][y] += newCol << 5;
+// const char *bit_rep[16] = {
+//     [ 0] = "0000", [ 1] = "0001", [ 2] = "0010", [ 3] = "0011",
+//     [ 4] = "0100", [ 5] = "0101", [ 6] = "0110", [ 7] = "0111",
+//     [ 8] = "1000", [ 9] = "1001", [10] = "1010", [11] = "1011",
+//     [12] = "1100", [13] = "1101", [14] = "1110", [15] = "1111",
+// };
+// uint8_t byte = cells[x][y];
+// sprintf(msg, "New cell value: %s%s.\n", bit_rep[byte >> 4], bit_rep[byte & 0x0F]);
+// renderer.outputMessage(msg);
+
                 }
                 else if ( ((cells[x][y] & CELL_ALIVE) != 0) && (neighbours > 3) )
                 {
                     //Populated cell with too many neighbours, so it will die
-                    cells[x][y] |= CELL_DEATH; //turn on kill bit
+                    cells[x][y] |= CELL_CHANGE; //turn on change bit
                 }
             }
         }
@@ -258,21 +307,34 @@ void GameOfLife::initialiseGrid(uint8_t patternIdx)
     repeat3Count = 0;
     for (uint8_t x = 0; x < popHistorySize; ++x) population[x] = 0;
 
-    //New random colour
-    cellColour = renderer.getRandomColour();
-    if (fadeSteps > 4) {
-        //Reject colours which are too close to red or green
-        const uint8_t maxDiff = 80;
-        while ( ( (cellColour.r - cellColour.g > maxDiff) && (cellColour.r - cellColour.b > maxDiff) ) 
-             || ( (cellColour.g - cellColour.r > maxDiff) && (cellColour.g - cellColour.b > maxDiff) ) ) {
+    //New random colours
+    for (uint8_t i=0; i < 8; i++) {
+        cellColours[i] = renderer.getRandomColour();
+    
+        if (fadeSteps > 4) {
+            //Reject colours which are too close to red or green
+            const uint8_t maxDiff = 80;
+            while ( ( (cellColours[i].r - cellColours[i].g > maxDiff) && (cellColours[i].r - cellColours[i].b > maxDiff) ) 
+                || ( (cellColours[i].g - cellColours[i].r > maxDiff) && (cellColours[i].g - cellColours[i].b > maxDiff) ) ) {
 
-            char msg[32];
-            sprintf(msg, "Rejected colour  %d, %d, %d\n", cellColour.r,  cellColour.g, cellColour.b);
-            renderer.outputMessage(msg);
-            cellColour = renderer.getRandomColour();
-                
-            }
-   }
+                char msg[32];
+                sprintf(msg, "Rejected colour  %d, %d, %d\n", cellColours[i].r,  cellColours[i].g, cellColours[i].b);
+                renderer.outputMessage(msg);
+                cellColours[i] = renderer.getRandomColour();
+                    
+                }
+        }
+    }
+
+    // //Debug using fixed colours
+    // cellColours[0] = RGB_colour(255,0,0);
+    // cellColours[1] = RGB_colour(255,100,0);
+    // cellColours[2] = RGB_colour(255,255,0);
+    // cellColours[3] = RGB_colour(0,255,0);
+    // cellColours[4] = RGB_colour(0,255,255);
+    // cellColours[5] = RGB_colour(0,0,255);
+    // cellColours[6] = RGB_colour(255,0,255);
+    // cellColours[7] = RGB_colour(100,0,255);
 
     if (patternIdx == 0) {
         //Random
@@ -283,8 +345,11 @@ void GameOfLife::initialiseGrid(uint8_t patternIdx)
                 uint8_t randNumber = renderer.random_int16(0,100);
                 if (randNumber < 15)
                 {
-                    cells[x][y] = CELL_ALIVE;
-                    renderer.setPixelColour(x, y, cellColour);
+                    //Pick random colour from palette
+                    uint8_t colIdx = renderer.random_int16(0,8);
+                    cells[x][y] = colIdx << 5; //Set colour bits (3 RH most bits)
+                    cells[x][y] |= CELL_ALIVE; //Set cell alive bit
+                    renderer.setPixelColour(x, y, cellColours[colIdx]);
                     alive++;
                 }
                 else
@@ -331,19 +396,19 @@ void GameOfLife::initialiseGrid(uint8_t patternIdx)
                 bool patternAlt[] = {
                 O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,
                 O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,
-                O,O,O,O,X,O,O,O,O,O,O,O,X,O,O,O,
-                O,O,O,X,X,X,O,O,O,O,O,X,X,X,O,O,
+                O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,
+                O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,
+                O,O,O,O,O,O,X,X,X,O,O,O,O,O,O,O,
+                O,O,O,O,O,O,X,O,X,O,O,O,O,O,O,O,
+                O,O,O,O,O,O,X,X,X,O,O,O,O,O,O,O,
+                O,O,O,O,O,O,X,X,X,O,O,O,O,O,O,O,
+                O,O,O,O,O,O,X,X,X,O,O,O,O,O,O,O,
+                O,O,O,O,O,O,X,X,X,O,O,O,O,O,O,O,
+                O,O,O,O,O,O,X,O,X,O,O,O,O,O,O,O,
+                O,O,O,O,O,O,X,X,X,O,O,O,O,O,O,O,
                 O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,
                 O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,
                 O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,
-                O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,
-                O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,
-                O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,
-                O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,
-                O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,
-                O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,
-                O,O,O,X,X,X,O,O,O,O,O,X,X,X,O,O,
-                O,O,O,O,X,O,O,O,O,O,O,O,X,O,O,O,
                 O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,O };
 
                 for (uint16_t i=0; i < 256; i++) pattern[i] = patternAlt[i];                    
@@ -470,42 +535,71 @@ void GameOfLife::initialiseGrid(uint8_t patternIdx)
             }
             break;
                 
+            case 8:
+            {
+                bool patternAlt[] = {
+                X,X,X,X,X,X,O,O,O,O,O,O,O,O,O,O,
+                X,O,O,O,O,O,X,O,O,O,O,O,O,O,O,O,
+                X,O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,
+                O,X,O,O,O,O,X,O,O,O,O,O,O,X,X,X,
+                O,O,O,X,X,O,O,O,O,O,O,O,O,O,O,X,
+                O,O,O,O,O,O,O,O,O,O,O,O,O,O,X,O,
+                O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,
+                O,X,O,O,X,O,O,O,O,O,O,O,O,O,O,O,
+                X,O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,
+                X,O,O,O,X,O,O,O,O,O,O,O,O,O,O,O,
+                X,X,X,X,O,O,O,O,O,O,O,O,O,O,O,O,
+                O,O,O,O,O,O,O,O,O,O,O,O,X,O,O,O,
+                O,O,O,O,O,O,O,O,O,O,X,O,O,O,X,O,
+                O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,X,
+                O,O,O,O,O,O,O,O,O,O,X,O,O,O,O,X,
+                O,O,O,O,O,O,O,O,O,O,O,X,X,X,X,X };
+
+                for (uint16_t i=0; i < 256; i++) pattern[i] = patternAlt[i];
+            }
+            break;
+                
         }
 
-        //Set up pattern
-        uint16_t offsetX = (renderer.getGridWidth() - 16) / 2;
-        uint16_t offsetY = (renderer.getGridHeight() - 16) / 2;
+        //Clear entire array of cells
         for(uint16_t y = 0; y < renderer.getGridHeight(); ++y)
         {
-            if ( (y >= offsetY) && (y < offsetY+16) )
-            {
-                for(uint16_t x = 0; x < renderer.getGridWidth(); ++x)
-                { 
-                    if ( (x >= offsetX) && (x < offsetX+16) 
-                        && (pattern[(16 - 1 - y+offsetY)*16 + x-offsetX]) ) 
-                    {
-                        cells[x][y] |= CELL_ALIVE;
-                        renderer.setPixelColour(x, y, cellColour);
-                        alive++;
-                    }
-                    else 
-                    {
-                        //Clear cells in pattern
-                        cells[x][y] &= ~CELL_ALIVE;
-                        renderer.setPixelColour(x, y, RGB_colour{0,0,0} );
-                    }
-                }
-            }
-            else 
-            {
-                for(uint16_t x = 0; x < renderer.getGridWidth(); ++x)
-                { 
-                    //Clear cells outside pattern
-                    cells[x][y] &= ~CELL_ALIVE;
-                    renderer.setPixelColour(x, y, RGB_colour{0,0,0} );
-                }
+            for(uint16_t x = 0; x < renderer.getGridWidth(); ++x)
+            { 
+                //Clear cells outside pattern
+                cells[x][y] &= ~CELL_ALIVE;
+                renderer.setPixelColour(x, y, RGB_colour{0,0,0} );
             }
         }
+
+        //Set up patterns
+        uint8_t colIdx = 0;
+        for(uint16_t py = 0; py < patternRepeatY; ++py) { 
+            for(uint16_t px = 0; px < patternRepeatX; ++px) { 
+                uint16_t spacingX = renderer.getGridWidth() / (patternRepeatX + 1);
+                uint16_t spacingY = renderer.getGridHeight() / (patternRepeatY + 1);
+                uint16_t offsetX = spacingX * (px + 1);
+                uint16_t offsetY = spacingY * (py + 1);
+
+                //Set pattern cells
+                for(uint16_t y = offsetY; y < offsetY + 16; ++y) { 
+                    for(uint16_t x = offsetX; x < offsetX + 16; ++x) { 
+                        if ( (pattern[(16 - 1 - y+offsetY)*16 + x-offsetX]) ) 
+                        {
+                            cells[x][y] = colIdx << 5; //Set colour bits (3 RH most bits)
+                            cells[x][y] |= CELL_ALIVE; //Set cell alive bit
+                            renderer.setPixelColour(x, y, cellColours[colIdx]);
+                            alive++;
+                        }
+                    }
+                }
+
+                //Increment colour from palette
+                colIdx++;
+                if (colIdx > 7) colIdx = 0;
+            }
+        }
+
     }
 
     renderer.updateDisplay();
@@ -547,14 +641,15 @@ void GameOfLife::applyChanges()
                 cells[x][y] &= ~CELL_PREV1;
 
             //Create new cells
-            if ((cells[x][y] & CELL_BIRTH) != 0)
+            if ( ((cells[x][y] & CELL_ALIVE) == 0) && ((cells[x][y] & CELL_CHANGE) != 0))
             {
                 cells[x][y] |= CELL_ALIVE;
-                renderer.setPixelColour(x, y, cellColour);
+                uint8_t colIdx = cells[x][y] >> 5;
+                renderer.setPixelColour(x, y, cellColours[colIdx]);
                 ++changes;
                 ++alive;
             }
-            else if ((cells[x][y] & CELL_DEATH) != 0)
+            else if ( ((cells[x][y] & CELL_ALIVE) != 0) && ((cells[x][y] & CELL_CHANGE) != 0))
             {
                 //Kill dying cells
                 cells[x][y] &= ~CELL_ALIVE;
@@ -633,11 +728,10 @@ void GameOfLife::applyChanges()
     if (gapCheck == true) ++unchangedPopulation[gap-1];
     else unchangedPopulation[gap-1] = 0;
 
-/*
-    char msg[16];
-    sprintf(msg, "Pop: %d ", alive);
-    renderer.outputMessage(msg);
-*/
+// char msg[64];
+// sprintf(msg, "Repeat 2 count: %d, Repeat 3 count: %d\n", repeat2Count, repeat3Count);
+// renderer.outputMessage(msg);
+
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -648,21 +742,14 @@ void GameOfLife::fadeInChanges(uint8_t step)
     uint8_t halfSteps = fadeSteps / 2; 
     RGB_colour born;
     RGB_colour died;
-    uint16_t maxBrightness = (uint16_t)(cellColour.r + cellColour.g + cellColour.b)/2;
-    if (maxBrightness > 255) maxBrightness = 255;
+    uint16_t maxBrightness = (uint16_t)(cellColours[0].r + cellColours[0].g + cellColours[0].b)/2;
+    if (maxBrightness > 128) maxBrightness = 128;
     uint8_t max8bit = (uint8_t)(maxBrightness);
 
-    if (step <= halfSteps)
-    {
+    if (step <= halfSteps) {
         //Set fade from black to green for cells being born
         born = renderer.blendColour(RGB_colour{0,0,0}, RGB_colour{0,max8bit,0}, step, halfSteps);
-        //Set fade cells dying out from current colour to red
-        died = renderer.blendColour(cellColour, RGB_colour{max8bit,0,0}, step, halfSteps);
-    }
-    else
-    {
-        //Set fade from green to active cell colour for cells being born
-        born = renderer.blendColour(RGB_colour{0,max8bit,0}, cellColour, step-halfSteps, fadeSteps-halfSteps);
+    } else {
         //Set fade colour for cells dying out from red to black
         died = renderer.blendColour(RGB_colour{max8bit,0,0}, RGB_colour{0,0,0}, step-halfSteps, fadeSteps-halfSteps);
     }
@@ -671,18 +758,30 @@ void GameOfLife::fadeInChanges(uint8_t step)
     {
         for(uint16_t x = 0; x < renderer.getGridWidth(); ++x)
         {
-            if ((cells[x][y] & CELL_BIRTH) != 0)
+            uint8_t colIdx = cells[x][y] >> 5;
+
+
+            if ( ((cells[x][y] & CELL_ALIVE) == 0) && ((cells[x][y] & CELL_CHANGE) != 0))
             {
-                renderer.setPixelInstant(x, y, born);
+                if (step <= halfSteps) {
+                    renderer.setPixelInstant(x, y, born);
+                } else {
+                    //Set fade from green to active cell colour for cells being born
+                    born = renderer.blendColour(RGB_colour{0,max8bit,0}, cellColours[colIdx], step-halfSteps, fadeSteps-halfSteps);
+                    renderer.setPixelInstant(x, y, born);
+                }
             }
-            else if ((cells[x][y] & CELL_DEATH) != 0)
+            else if ( ((cells[x][y] & CELL_ALIVE) != 0) && ((cells[x][y] & CELL_CHANGE) != 0))
             {
+                if (step <= halfSteps) {
+                    //Set fade cells dying out from current colour to red
+                    died = renderer.blendColour(cellColours[colIdx], RGB_colour{max8bit,0,0}, step, halfSteps);
+                }
                 renderer.setPixelInstant(x, y, died);
             }
             else if ((cells[x][y] & CELL_ALIVE) != 0)
             {
-                renderer.setPixelInstant(x, y, cellColour);
-                //renderer.setPixelInstant(x, y, RGB_colour{192,192,192});
+                renderer.setPixelInstant(x, y, cellColours[colIdx]);
             }
         }
     }
@@ -700,9 +799,9 @@ bool GameOfLife::getCellState(uint16_t x, uint16_t y)
     return ( (cells[x][y] & CELL_ALIVE) != 0 );
 }
 
-RGB_colour GameOfLife::getCellColour()
+RGB_colour GameOfLife::getCellColour(uint8_t idx)
 {
-    return cellColour;
+    return cellColours[idx];
 }
 
 void GameOfLife::restart()
