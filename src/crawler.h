@@ -36,6 +36,7 @@ class Crawler
 {
     //variables
     public:
+        bool anyAngle;
     protected:
     private:
         RGBMatrixRenderer &renderer;
@@ -45,7 +46,6 @@ class Crawler
         uint16_t colChgCount = 50;
         uint16_t dirChgCount = 1;
         RGB_colour colour;
-        bool anyAngle;
     //functions
     public:
         Crawler(RGBMatrixRenderer&,uint16_t,uint16_t,bool=false);
