@@ -680,15 +680,15 @@ void RGBMatrixRenderer::setPixelValue(uint16_t index, uint16_t value)
     img[index] = value;
 }
 
-// Sets pixel colour in memory only (will not show changes until update display called)
-void RGBMatrixRenderer::setPixelColour(uint16_t x, uint16_t y, RGB_colour colour)
+// Sets pixel colour in memory only (will not show changes until update display called) when persistent, else set instant
+void RGBMatrixRenderer::setPixelColour(uint16_t x, uint16_t y, RGB_colour colour, bool persistent)
 {
-    img[y * gridWidth + x] = getColourId(colour);
-/*
-    char msg[80];
-    sprintf(msg, "Set img pixel: %d Colour: %d,%d,%d\n", y * gridWidth + x, colour.r, colour.g, colour.b );
-    outputMessage(msg);
-*/ 
+    if (persistent) {
+        img[y * gridWidth + x] = getColourId(colour);
+    }
+    else {
+        setPixelInstant(x,y,colour);
+    }
 }
 
 // Sets pixel colour directly on display. Faster and non-persistent as in memory display
@@ -698,66 +698,66 @@ void RGBMatrixRenderer::setPixelInstant(uint16_t x, uint16_t y, RGB_colour colou
     setPixel(x,y,colour);
 }
 
-void RGBMatrixRenderer::drawOctants(int xc, int yc, int x, int y, int yPrev, RGB_colour colour, bool solid)
+void RGBMatrixRenderer::drawOctants(int xc, int yc, int x, int y, int yPrev, RGB_colour colour, bool solid, bool persistent)
 {
     if (x > 0) {
         if (y == yPrev || solid == false) {
-            setPixelInstant(xc+x, yc+y, colour);
-            setPixelInstant(xc-x, yc+y, colour);
-            setPixelInstant(xc+x, yc-y, colour);
-            setPixelInstant(xc-x, yc-y, colour);
+            setPixelColour(xc+x, yc+y, colour, persistent);
+            setPixelColour(xc-x, yc+y, colour, persistent);
+            setPixelColour(xc+x, yc-y, colour, persistent);
+            setPixelColour(xc-x, yc-y, colour, persistent);
             if (solid) {
                 for (int lineX = xc-y; lineX <= xc+y; lineX++){
-                    setPixelInstant(lineX, yc+x, colour);
-                    setPixelInstant(lineX, yc-x, colour);
+                    setPixelColour(lineX, yc+x, colour, persistent);
+                    setPixelColour(lineX, yc-x, colour, persistent);
                 }
             }
             else {
-                setPixelInstant(xc+y, yc+x, colour);
-                setPixelInstant(xc-y, yc+x, colour);
-                setPixelInstant(xc+y, yc-x, colour);
-                setPixelInstant(xc-y, yc-x, colour);
+                setPixelColour(xc+y, yc+x, colour, persistent);
+                setPixelColour(xc-y, yc+x, colour, persistent);
+                setPixelColour(xc+y, yc-x, colour, persistent);
+                setPixelColour(xc-y, yc-x, colour, persistent);
             }
         }
         else {
             //Inner most pixels of horizontal section, so fill all postions in x range
             for (int lineX = xc-x; lineX <= xc+x; lineX++){
-                setPixelInstant(lineX, yc+y, colour);
-                setPixelInstant(lineX, yc-y, colour);
+                setPixelColour(lineX, yc+y, colour, persistent);
+                setPixelColour(lineX, yc-y, colour, persistent);
             }
             if (solid) {
                 //Middle of circle horizontal lines for every line
                 for (int lineX = xc-y; lineX <= xc+y; lineX++){
-                    setPixelInstant(lineX, yc+x, colour);
-                    setPixelInstant(lineX, yc-x, colour);
+                    setPixelColour(lineX, yc+x, colour, persistent);
+                    setPixelColour(lineX, yc-x, colour, persistent);
                 }
             }
         }
     }
     else {
-        setPixelInstant(xc, yc+y, colour);
-        setPixelInstant(xc, yc-y, colour);
+        setPixelColour(xc, yc+y, colour, persistent);
+        setPixelColour(xc, yc-y, colour, persistent);
         if (solid) {
             for (int lineX = xc-y; lineX <= xc+y; lineX++){
-                setPixelInstant(lineX, yc, colour);
+                setPixelColour(lineX, yc, colour, persistent);
             }
         }
         else {
-            setPixelInstant(xc-y, yc, colour);
-            setPixelInstant(xc+y, yc, colour);
+            setPixelColour(xc-y, yc, colour, persistent);
+            setPixelColour(xc+y, yc, colour, persistent);
         }
     }
 }
  
 // Function for circle-generation
 // using Bresenham's algorithm
-void RGBMatrixRenderer::drawCircle(int xc, int yc, int radius, RGB_colour colour, bool solid)
+void RGBMatrixRenderer::drawCircle(int xc, int yc, int radius, RGB_colour colour, bool solid, bool persistent)
 {
     int r = radius;
     int x = 0, y = r, yPrev = y;
     int d = 3 - 2 * r;
     //Draw the 4 pixels marking the top, bottom, left and right most points in the circle
-    drawOctants(xc, yc, x, y, yPrev, colour, solid);
+    drawOctants(xc, yc, x, y, yPrev, colour, solid, persistent);
     //Now draw the positions either side of the last points drawn and continue moving
     //around the circumference drawing 8 pixels each step
     while (y >= x) {
@@ -771,7 +771,7 @@ void RGBMatrixRenderer::drawCircle(int xc, int yc, int radius, RGB_colour colour
         }
         else
             d = d + 4 * x + 6;
-        drawOctants(xc, yc, x, y, yPrev, colour, solid);
+        drawOctants(xc, yc, x, y, yPrev, colour, solid, persistent);
         yPrev = y;
     }
 }

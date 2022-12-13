@@ -97,7 +97,7 @@ class RGBMatrixRenderer
         RGBMatrixRenderer(uint16_t, uint16_t, uint8_t=255, bool=false);
         virtual ~RGBMatrixRenderer();
         void setPixelValue(uint16_t,uint16_t);
-        void setPixelColour(uint16_t, uint16_t, RGB_colour);
+        void setPixelColour(uint16_t, uint16_t, RGB_colour, bool=true);
         void setPixelInstant(uint16_t, uint16_t, RGB_colour);
         void updateDisplay();
         void clearImage();
@@ -113,11 +113,11 @@ class RGBMatrixRenderer
         RGB_colour blendColour(RGB_colour,RGB_colour,uint8_t,uint8_t);
         uint16_t getColourId(RGB_colour);
         RGB_colour getColour(uint16_t);
-        void drawCircle(int, int, int, RGB_colour, bool=true);
+        void drawCircle(int, int, int, RGB_colour, bool=true, bool=true);
     private:
         uint16_t newPosition(uint16_t,uint16_t,uint16_t,bool);
         uint8_t getPanel(MovingPixel);
         virtual void setPixel(uint16_t, uint16_t, RGB_colour) = 0;
-        void drawOctants(int, int, int, int, int, RGB_colour, bool);
+        void drawOctants(int, int, int, int, int, RGB_colour, bool, bool);
 
 }; //RGBMatrixRenderer
