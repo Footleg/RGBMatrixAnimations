@@ -584,12 +584,14 @@ void GameOfLife::initialiseGrid(uint8_t patternIdx)
                 //Set pattern cells
                 for(uint16_t y = offsetY; y < offsetY + 16; ++y) { 
                     for(uint16_t x = offsetX; x < offsetX + 16; ++x) { 
-                        if ( (pattern[(16 - 1 - y+offsetY)*16 + x-offsetX]) ) 
-                        {
-                            cells[x][y] = colIdx << 5; //Set colour bits (3 RH most bits)
-                            cells[x][y] |= CELL_ALIVE; //Set cell alive bit
-                            renderer.setPixelColour(x, y, cellColours[colIdx]);
-                            alive++;
+                        //Only set cells if inside display area
+                        if ( (x < renderer.getGridWidth()) && (y < renderer.getGridHeight()) ) {
+                            if ( (pattern[(16 - 1 - y+offsetY)*16 + x-offsetX]) ) {
+                                cells[x][y] = colIdx << 5; //Set colour bits (3 RH most bits)
+                                cells[x][y] |= CELL_ALIVE; //Set cell alive bit
+                                renderer.setPixelColour(x, y, cellColours[colIdx]);
+                                alive++;
+                            }
                         }
                     }
                 }
