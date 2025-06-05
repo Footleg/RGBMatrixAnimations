@@ -65,11 +65,7 @@ class RGBMatrixRenderer
     //variables
     public:
         const uint8_t SUBPIXEL_RES = 100;
-        uint16_t getGridWidth();
-        uint16_t getGridHeight();
-        uint8_t getMaxBrightness();
-        uint16_t getPixelValue(uint16_t);
-        uint16_t getPixelValue(uint16_t,uint16_t);
+        uint8_t residual = 0;
     protected:
         uint16_t gridWidth;
         uint16_t gridHeight;
@@ -96,7 +92,13 @@ class RGBMatrixRenderer
     public:
         RGBMatrixRenderer(uint16_t, uint16_t, uint8_t=255, bool=false);
         virtual ~RGBMatrixRenderer();
+        uint16_t getGridWidth();
+        uint16_t getGridHeight();
+        uint8_t getMaxBrightness();
+        uint16_t getPixelValue(uint16_t);
+        uint16_t getPixelValue(uint16_t,uint16_t);
         void setPixelValue(uint16_t,uint16_t);
+        RGB_colour getPixelColour(uint16_t x, uint16_t y);
         void setPixelColour(uint16_t, uint16_t, RGB_colour, bool=true);
         void setPixelInstant(uint16_t, uint16_t, RGB_colour);
         void updateDisplay();
