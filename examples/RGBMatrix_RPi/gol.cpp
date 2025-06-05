@@ -42,8 +42,8 @@ static void InterruptHandler(int signo) {
 // using the syntax *this
 class Animation : public ThreadedCanvasManipulator, public RGBMatrixRenderer {
     public:
-        Animation(Canvas *m, uint16_t width, uint16_t height, uint16_t delay_ms, uint8_t fade_steps, uint8_t start_pattern_)
-            : ThreadedCanvasManipulator(m), RGBMatrixRenderer{width,height}, delay_ms_(delay_ms), animation(*this,fade_steps,delay_ms,start_pattern_)
+        Animation(Canvas *m, uint16_t width, uint16_t height, uint16_t delay_ms, uint8_t fade_steps, uint8_t start_pattern_, uint8_t patternSpacingX_, uint8_t patternSpacingY_)
+            : ThreadedCanvasManipulator(m), RGBMatrixRenderer{width,height}, delay_ms_(delay_ms), animation(*this,fade_steps,delay_ms,start_pattern_,patternSpacingX_,patternSpacingY_)
         {}
 
         virtual ~Animation(){}
@@ -90,7 +90,10 @@ static int usage(const char *progname) {
             "\t-m <msecs>                : Milliseconds pause between updates.\n"
             "\t-t <seconds>              : Run for these number of seconds, then exit.\n"
             "\t-f <steps>                : Number of steps in colour fades (1=no fades).\n"
-            "\t-s <start-pattern>        : Preset starting pattern (0=random).\n");
+            "\t-s <start-pattern>        : Preset starting pattern (0=random).\n"
+            "\t-h <number>               : Number of copies of pattern vertically (1..n).\n"
+            "\t-w <number>               : Number of copies of pattern across width (1..n).\n"
+            );
 
     rgb_matrix::PrintMatrixFlags(stderr);
 
@@ -105,6 +108,8 @@ int main(int argc, char *argv[]) {
     int scroll_ms = 30;
     uint8_t fade_steps = 50;
     uint8_t start_pattern = 0;
+    uint8_t patX = 1;
+    uint8_t patY = 1;
 
     srand(time(NULL));
  
@@ -123,7 +128,7 @@ int main(int argc, char *argv[]) {
     }
 
     int opt;
-    while ((opt = getopt(argc, argv, "dD:t:r:f:s:P:c:p:b:m:LR:")) != -1) {
+    while ((opt = getopt(argc, argv, "dD:t:r:f:s:w:h:P:c:p:b:m:LR:")) != -1) {
         switch (opt) {
         case 't':
         runtime_seconds = atoi(optarg);
@@ -139,6 +144,14 @@ int main(int argc, char *argv[]) {
 
         case 's':
         start_pattern = atoi(optarg);
+        break;
+
+        case 'w':
+        patX = atoi(optarg);
+        break;
+
+        case 'h':
+        patY = atoi(optarg);
         break;
 
         // These used to be options we understood, but deprecated now. Accept
@@ -199,7 +212,7 @@ int main(int argc, char *argv[]) {
     // The ThreadedCanvasManipulator objects are filling
     // the matrix continuously.
     ThreadedCanvasManipulator *image_gen = NULL;
-    image_gen = new Animation(canvas, canvas->width(), canvas->height(), scroll_ms, fade_steps, start_pattern);
+    image_gen = new Animation(canvas, canvas->width(), canvas->height(), scroll_ms, fade_steps, start_pattern, patX, patY);
 
     // Set up an interrupt handler to be able to stop animations while they go
     // on. Note, each demo tests for while (running() && !interrupt_received) {},
