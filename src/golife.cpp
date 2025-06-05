@@ -352,205 +352,173 @@ void GameOfLife::initialiseGrid(uint8_t patternIdx) {
     bool pattern[256] = {O};
 
     switch (patternIdx) {
-      case 1:
-      {
-        bool patternAlt[] = {
-            O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,
-            O, O, O, O, O, O, O, O, O, O, X, X, O, O, O, O,
-            O, O, O, O, O, O, O, O, O, O, X, X, O, O, O, O,
-            O, O, O, O, O, O, O, O, O, X, O, O, O, O, O, O,
-            O, O, O, O, O, O, O, O, O, O, X, X, X, O, O, O,
-            O, O, O, O, O, O, O, O, O, O, X, X, X, O, O, O,
-            O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,
-            O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,
-            O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,
-            O, O, O, O, O, O, O, O, O, O, X, X, X, O, O, O,
-            O, O, O, O, O, O, O, O, O, O, X, X, X, O, O, O,
-            O, O, O, O, O, O, O, O, O, X, O, O, O, O, O, O,
-            O, O, O, O, O, O, O, O, O, O, X, X, O, O, O, O,
-            O, O, O, O, O, O, O, O, O, O, X, X, O, O, O, O,
-            O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,
-            O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O};
+      case 1: {
+        bool patternAlt[] = {O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,  //
+                             O, O, O, O, O, O, O, O, O, O, X, X, O, O, O, O,  //
+                             O, O, O, O, O, O, O, O, O, O, X, X, O, O, O, O,  //
+                             O, O, O, O, O, O, O, O, O, X, O, O, O, O, O, O,  //
+                             O, O, O, O, O, O, O, O, O, O, X, X, X, O, O, O,  //
+                             O, O, O, O, O, O, O, O, O, O, X, X, X, O, O, O,  //
+                             O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,  //
+                             O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,  //
+                             O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,  //
+                             O, O, O, O, O, O, O, O, O, O, X, X, X, O, O, O,  //
+                             O, O, O, O, O, O, O, O, O, O, X, X, X, O, O, O,  //
+                             O, O, O, O, O, O, O, O, O, X, O, O, O, O, O, O,  //
+                             O, O, O, O, O, O, O, O, O, O, X, X, O, O, O, O,  //
+                             O, O, O, O, O, O, O, O, O, O, X, X, O, O, O, O,  //
+                             O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,  //
+                             O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O};
 
-        for (uint16_t i = 0; i < 256; i++)
-          pattern[i] = patternAlt[i];
-      }
-      break;
+        for (uint16_t i = 0; i < 256; i++) pattern[i] = patternAlt[i];
+      } break;
 
-      case 2:
-      {
-        bool patternAlt[] = {
-            O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,
-            O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,
-            O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,
-            O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,
-            O, O, O, O, O, O, X, X, X, O, O, O, O, O, O, O,
-            O, O, O, O, O, O, X, O, X, O, O, O, O, O, O, O,
-            O, O, O, O, O, O, X, X, X, O, O, O, O, O, O, O,
-            O, O, O, O, O, O, X, X, X, O, O, O, O, O, O, O,
-            O, O, O, O, O, O, X, X, X, O, O, O, O, O, O, O,
-            O, O, O, O, O, O, X, X, X, O, O, O, O, O, O, O,
-            O, O, O, O, O, O, X, O, X, O, O, O, O, O, O, O,
-            O, O, O, O, O, O, X, X, X, O, O, O, O, O, O, O,
-            O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,
-            O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,
-            O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,
-            O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O};
+      case 2: {
+        bool patternAlt[] = {O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,  //
+                             O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,  //
+                             O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,  //
+                             O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,  //
+                             O, O, O, O, O, O, X, X, X, O, O, O, O, O, O, O,  //
+                             O, O, O, O, O, O, X, O, X, O, O, O, O, O, O, O,  //
+                             O, O, O, O, O, O, X, X, X, O, O, O, O, O, O, O,  //
+                             O, O, O, O, O, O, X, X, X, O, O, O, O, O, O, O,  //
+                             O, O, O, O, O, O, X, X, X, O, O, O, O, O, O, O,  //
+                             O, O, O, O, O, O, X, X, X, O, O, O, O, O, O, O,  //
+                             O, O, O, O, O, O, X, O, X, O, O, O, O, O, O, O,  //
+                             O, O, O, O, O, O, X, X, X, O, O, O, O, O, O, O,  //
+                             O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,  //
+                             O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,  //
+                             O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,  //
+                             O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O};
 
-        for (uint16_t i = 0; i < 256; i++)
-          pattern[i] = patternAlt[i];
-      }
-      break;
+        for (uint16_t i = 0; i < 256; i++) pattern[i] = patternAlt[i];
+      } break;
 
-      case 3:
-      {
-        bool patternAlt[] = {
-            O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,
-            O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,
-            O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,
-            O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,
-            O, O, O, O, O, X, X, X, O, X, O, O, O, O, O, O,
-            O, O, O, O, O, X, O, O, O, O, O, O, O, O, O, O,
-            O, O, O, O, O, O, O, O, X, X, O, O, O, O, O, O,
-            O, O, O, O, O, O, X, X, O, X, O, O, O, O, O, O,
-            O, O, O, O, O, X, O, X, O, X, O, O, O, O, O, O,
-            O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,
-            O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,
-            O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,
-            O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,
-            O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,
-            O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,
-            O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O};
+      case 3: {
+        bool patternAlt[] = {O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,  //
+                             O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,  //
+                             O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,  //
+                             O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,  //
+                             O, O, O, O, O, X, X, X, O, X, O, O, O, O, O, O,  //
+                             O, O, O, O, O, X, O, O, O, O, O, O, O, O, O, O,  //
+                             O, O, O, O, O, O, O, O, X, X, O, O, O, O, O, O,  //
+                             O, O, O, O, O, O, X, X, O, X, O, O, O, O, O, O,  //
+                             O, O, O, O, O, X, O, X, O, X, O, O, O, O, O, O,  //
+                             O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,  //
+                             O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,  //
+                             O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,  //
+                             O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,  //
+                             O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,  //
+                             O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,  //
+                             O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O};
 
-        for (uint16_t i = 0; i < 256; i++)
-          pattern[i] = patternAlt[i];
-      }
-      break;
+        for (uint16_t i = 0; i < 256; i++) pattern[i] = patternAlt[i];
+      } break;
 
-      case 4:
-      {
-        bool patternAlt[] = {
-            O, O, O, O, X, X, X, O, O, O, O, O, O, O, O, O,
-            O, O, O, O, O, O, X, O, O, O, O, O, O, O, O, O,
-            O, O, O, O, O, X, O, O, O, O, O, O, O, O, O, O,
-            O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,
-            O, O, O, O, O, O, O, X, X, O, O, O, O, O, O, O,
-            O, O, O, O, O, O, X, O, O, X, O, O, O, O, O, O,
-            O, O, O, O, O, X, O, O, O, O, X, O, O, O, O, O,
-            O, O, O, O, X, O, O, O, O, O, O, X, O, O, O, O,
-            O, O, O, O, X, O, O, O, O, O, O, X, O, O, O, O,
-            O, O, O, O, O, X, O, O, O, O, X, O, O, O, O, O,
-            O, O, O, O, O, O, X, O, O, X, O, O, O, O, O, O,
-            O, O, O, O, O, O, O, X, X, O, O, O, O, O, O, O,
-            O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,
-            O, O, O, O, O, O, O, O, O, O, X, O, O, O, O, O,
-            O, O, O, O, O, O, O, O, O, X, O, O, O, O, O, O,
-            O, O, O, O, O, O, O, O, O, X, X, X, O, O, O, O};
+      case 4: {
+        bool patternAlt[] = {O, O, O, O, X, X, X, O, O, O, O, O, O, O, O, O,  //
+                             O, O, O, O, O, O, X, O, O, O, O, O, O, O, O, O,  //
+                             O, O, O, O, O, X, O, O, O, O, O, O, O, O, O, O,  //
+                             O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,  //
+                             O, O, O, O, O, O, O, X, X, O, O, O, O, O, O, O,  //
+                             O, O, O, O, O, O, X, O, O, X, O, O, O, O, O, O,  //
+                             O, O, O, O, O, X, O, O, O, O, X, O, O, O, O, O,  //
+                             O, O, O, O, X, O, O, O, O, O, O, X, O, O, O, O,  //
+                             O, O, O, O, X, O, O, O, O, O, O, X, O, O, O, O,  //
+                             O, O, O, O, O, X, O, O, O, O, X, O, O, O, O, O,  //
+                             O, O, O, O, O, O, X, O, O, X, O, O, O, O, O, O,  //
+                             O, O, O, O, O, O, O, X, X, O, O, O, O, O, O, O,  //
+                             O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,  //
+                             O, O, O, O, O, O, O, O, O, O, X, O, O, O, O, O,  //
+                             O, O, O, O, O, O, O, O, O, X, O, O, O, O, O, O,  //
+                             O, O, O, O, O, O, O, O, O, X, X, X, O, O, O, O};
 
-        for (uint16_t i = 0; i < 256; i++)
-          pattern[i] = patternAlt[i];
-      }
-      break;
+        for (uint16_t i = 0; i < 256; i++) pattern[i] = patternAlt[i];
+      } break;
 
-      case 5:
-      {
-        bool patternAlt[] = {
-            O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,
-            O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,
-            O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,
-            O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,
-            O, O, O, O, O, O, O, X, X, O, O, O, O, O, O, O,
-            O, O, O, O, O, O, X, O, O, X, O, O, O, O, O, O,
-            O, O, O, O, O, X, O, O, O, O, X, O, O, O, O, O,
-            O, O, O, O, X, O, O, O, O, O, O, X, O, O, O, O,
-            O, O, O, O, X, O, O, O, O, O, O, X, O, O, O, O,
-            O, O, O, O, O, X, O, O, O, O, X, O, O, O, O, O,
-            O, O, O, O, O, O, X, O, O, X, O, O, O, O, O, O,
-            O, O, O, O, O, O, O, X, X, O, O, O, O, O, O, O,
-            O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,
-            O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,
-            O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,
-            O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O};
+      case 5: {
+        bool patternAlt[] = {O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,  //
+                             O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,  //
+                             O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,  //
+                             O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,  //
+                             O, O, O, O, O, O, O, X, X, O, O, O, O, O, O, O,  //
+                             O, O, O, O, O, O, X, O, O, X, O, O, O, O, O, O,  //
+                             O, O, O, O, O, X, O, O, O, O, X, O, O, O, O, O,  //
+                             O, O, O, O, X, O, O, O, O, O, O, X, O, O, O, O,  //
+                             O, O, O, O, X, O, O, O, O, O, O, X, O, O, O, O,  //
+                             O, O, O, O, O, X, O, O, O, O, X, O, O, O, O, O,  //
+                             O, O, O, O, O, O, X, O, O, X, O, O, O, O, O, O,  //
+                             O, O, O, O, O, O, O, X, X, O, O, O, O, O, O, O,  //
+                             O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,  //
+                             O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,  //
+                             O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,  //
+                             O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O};
 
-        for (uint16_t i = 0; i < 256; i++)
-          pattern[i] = patternAlt[i];
-      }
-      break;
+        for (uint16_t i = 0; i < 256; i++) pattern[i] = patternAlt[i];
+      } break;
 
-      case 6:
-      {
-        bool patternAlt[] = {
-            O, O, O, O, X, X, X, O, O, O, O, O, O, O, O, O,
-            O, O, O, O, O, O, X, O, O, O, O, O, O, O, O, O,
-            O, O, O, O, O, X, O, O, O, O, O, O, O, O, O, O,
-            O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,
-            O, O, O, O, O, O, O, X, X, O, O, O, O, O, O, X,
-            O, O, O, O, O, O, X, O, O, X, O, O, O, X, O, X,
-            O, O, O, O, O, X, O, O, O, O, X, O, O, O, X, X,
-            O, O, O, O, X, O, O, O, O, O, O, X, O, O, O, O,
-            O, O, O, O, X, O, O, O, O, O, O, X, O, O, O, O,
-            X, X, O, O, O, X, O, O, O, O, X, O, O, O, O, O,
-            X, O, X, O, O, O, X, O, O, X, O, O, O, O, O, O,
-            X, O, O, O, O, O, O, X, X, O, O, O, O, O, O, O,
-            O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,
-            O, O, O, O, O, O, O, O, O, O, X, O, O, O, O, O,
-            O, O, O, O, O, O, O, O, O, X, O, O, O, O, O, O,
-            O, O, O, O, O, O, O, O, O, X, X, X, O, O, O, O};
+      case 6: {
+        bool patternAlt[] = {O, O, O, O, X, X, X, O, O, O, O, O, O, O, O, O,  //
+                             O, O, O, O, O, O, X, O, O, O, O, O, O, O, O, O,  //
+                             O, O, O, O, O, X, O, O, O, O, O, O, O, O, O, O,  //
+                             O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,  //
+                             O, O, O, O, O, O, O, X, X, O, O, O, O, O, O, X,  //
+                             O, O, O, O, O, O, X, O, O, X, O, O, O, X, O, X,  //
+                             O, O, O, O, O, X, O, O, O, O, X, O, O, O, X, X,  //
+                             O, O, O, O, X, O, O, O, O, O, O, X, O, O, O, O,  //
+                             O, O, O, O, X, O, O, O, O, O, O, X, O, O, O, O,  //
+                             X, X, O, O, O, X, O, O, O, O, X, O, O, O, O, O,  //
+                             X, O, X, O, O, O, X, O, O, X, O, O, O, O, O, O,  //
+                             X, O, O, O, O, O, O, X, X, O, O, O, O, O, O, O,  //
+                             O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,  //
+                             O, O, O, O, O, O, O, O, O, O, X, O, O, O, O, O,  //
+                             O, O, O, O, O, O, O, O, O, X, O, O, O, O, O, O,  //
+                             O, O, O, O, O, O, O, O, O, X, X, X, O, O, O, O};
 
-        for (uint16_t i = 0; i < 256; i++)
-          pattern[i] = patternAlt[i];
-      }
-      break;
+        for (uint16_t i = 0; i < 256; i++) pattern[i] = patternAlt[i];
+      } break;
 
-      case 7:
-      {
-        bool patternAlt[] = {
-            O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,
-            O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,
-            O, O, O, O, O, X, X, X, O, O, O, O, O, O, O, O,
-            O, O, O, O, O, X, O, O, X, X, X, O, O, O, O, O,
-            O, O, O, O, O, X, X, X, O, O, X, O, O, O, O, O,
-            O, O, O, O, O, O, O, O, X, X, X, O, O, O, O, O,
-            O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,
-            O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,
-            O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,
-            O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,
-            O, O, O, O, O, X, X, X, O, O, O, O, O, O, O, O,
-            O, O, O, O, O, X, O, O, X, X, X, O, O, O, O, O,
-            O, O, O, O, O, X, X, X, O, O, X, O, O, O, O, O,
-            O, O, O, O, O, O, O, O, X, X, X, O, O, O, O, O,
-            O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,
-            O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O};
+      case 7: {
+        bool patternAlt[] = {O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,  //
+                             O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,  //
+                             O, O, O, O, O, X, X, X, O, O, O, O, O, O, O, O,  //
+                             O, O, O, O, O, X, O, O, X, X, X, O, O, O, O, O,  //
+                             O, O, O, O, O, X, X, X, O, O, X, O, O, O, O, O,  //
+                             O, O, O, O, O, O, O, O, X, X, X, O, O, O, O, O,  //
+                             O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,  //
+                             O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,  //
+                             O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,  //
+                             O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,  //
+                             O, O, O, O, O, X, X, X, O, O, O, O, O, O, O, O,  //
+                             O, O, O, O, O, X, O, O, X, X, X, O, O, O, O, O,  //
+                             O, O, O, O, O, X, X, X, O, O, X, O, O, O, O, O,  //
+                             O, O, O, O, O, O, O, O, X, X, X, O, O, O, O, O,  //
+                             O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,  //
+                             O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O};
 
-        for (uint16_t i = 0; i < 256; i++)
-          pattern[i] = patternAlt[i];
-      }
-      break;
+        for (uint16_t i = 0; i < 256; i++) pattern[i] = patternAlt[i];
+      } break;
 
-      case 8:
-      {
-        bool patternAlt[] = {
-            X, X, X, X, X, X, O, O, O, O, O, O, O, O, O, O,
-            X, O, O, O, O, O, X, O, O, O, O, O, O, O, O, O,
-            X, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,
-            O, X, O, O, O, O, X, O, O, O, O, O, O, X, X, X,
-            O, O, O, X, X, O, O, O, O, O, O, O, O, O, O, X,
-            O, O, O, O, O, O, O, O, O, O, O, O, O, O, X, O,
-            O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,
-            O, X, O, O, X, O, O, O, O, O, O, O, O, O, O, O,
-            X, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,
-            X, O, O, O, X, O, O, O, O, O, O, O, O, O, O, O,
-            X, X, X, X, O, O, O, O, O, O, O, O, O, O, O, O,
-            O, O, O, O, O, O, O, O, O, O, O, O, X, O, O, O,
-            O, O, O, O, O, O, O, O, O, O, X, O, O, O, X, O,
-            O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, X,
-            O, O, O, O, O, O, O, O, O, O, X, O, O, O, O, X,
-            O, O, O, O, O, O, O, O, O, O, O, X, X, X, X, X};
+      case 8: {
+        bool patternAlt[] = {X, X, X, X, X, X, O, O, O, O, O, O, O, O, O, O,  //
+                             X, O, O, O, O, O, X, O, O, O, O, O, O, O, O, O,  //
+                             X, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,  //
+                             O, X, O, O, O, O, X, O, O, O, O, O, O, X, X, X,  //
+                             O, O, O, X, X, O, O, O, O, O, O, O, O, O, O, X,  //
+                             O, O, O, O, O, O, O, O, O, O, O, O, O, O, X, O,  //
+                             O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,  //
+                             O, X, O, O, X, O, O, O, O, O, O, O, O, O, O, O,  //
+                             X, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,  //
+                             X, O, O, O, X, O, O, O, O, O, O, O, O, O, O, O,  //
+                             X, X, X, X, O, O, O, O, O, O, O, O, O, O, O, O,  //
+                             O, O, O, O, O, O, O, O, O, O, O, O, X, O, O, O,  //
+                             O, O, O, O, O, O, O, O, O, O, X, O, O, O, X, O,  //
+                             O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, X,  //
+                             O, O, O, O, O, O, O, O, O, O, X, O, O, O, O, X,  //
+                             O, O, O, O, O, O, O, O, O, O, O, X, X, X, X, X};
 
-        for (uint16_t i = 0; i < 256; i++)
-          pattern[i] = patternAlt[i];
-      }
-      break;
+        for (uint16_t i = 0; i < 256; i++) pattern[i] = patternAlt[i];
+      } break;
     }
 
     // Clear entire array of cells
